@@ -2121,3 +2121,40 @@ body {
         padding: 16px;
     }
 }
+
+/* ===== 拖拽排序样式 ===== */
+/* 注：.content-item 的 flex 布局已由 .techstack-section .content-item 提供，
+   此处仅补充手柄与拖拽态，避免特异性冲突 */
+
+.drag-handle {
+    flex: 0 0 20px;
+    width: 20px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-muted, #888);
+    font-size: 14px;
+    line-height: 1;
+    cursor: grab;
+    user-select: none;
+    text-align: center;
+}
+
+.drag-handle:hover {
+    color: var(--text-color, #333);
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.drag-handle:focus-visible {
+    outline: 2px solid #4a90d9;
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+
+.sortable-item.dragging {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: var(--bg-elevated, #fff);
+}
