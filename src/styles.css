@@ -2132,6 +2132,14 @@ body {
 .sortable-item {
     touch-action: none;
     user-select: none;
+    display: flex;
+    align-items: flex-start;
+}
+
+/* DayCard 中 .task-list 内的 sortable-item：内容占据剩余空间 */
+.task-list .sortable-item > :not(.drag-handle) {
+    flex: 1;
+    min-width: 0;
 }
 
 .drag-handle {
