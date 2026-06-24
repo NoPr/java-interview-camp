@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Java 面试冲刺 30 天 · 交互式 Dashboard</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --bg-secondary: #f7f7f5;
+  --bg-tertiary: #efefed;
+  --border: #e3e3e0;
+  --text: #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --text-tertiary: #9b9b9b;
+  --accent: #2563eb;
+  --accent-light: #dbeafe;
+  --accent-bg: #eff6ff;
+  --green: #16a34a;
+  --green-light: #dcfce7;
+  --orange: #ea580c;
+  --orange-light: #fed7aa;
+  --red: #dc2626;
+  --red-light: #fee2e2;
+  --purple: #7c3aed;
+  --purple-light: #ede9fe;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-secondary);
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+/* === HEADER === */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px;
+}
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header h1 { font-size: 18px; font-weight: 700; white-space: nowrap; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+
+/* Tier Switcher */
+.tier-switcher { display: flex; gap: 4px; background: var(--bg-secondary); border-radius: 8px; padding: 3px; }
+.tier-btn {
+  border: none; background: transparent; padding: 6px 14px;
+  border-radius: 6px; font-size: 13px; cursor: pointer;
+  color: var(--text-secondary); font-weight: 500;
+  transition: all 0.15s;
+}
+.tier-btn:hover { color: var(--text); }
+.tier-btn.active { background: var(--bg); color: var(--accent); box-shadow: var(--shadow); font-weight: 600; }
+
+/* Progress */
+.progress-info { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-secondary); }
+.progress-bar { width: 120px; height: 6px; background: var(--bg-tertiary); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; }
+.progress-text { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* === LAYOUT === */
+.app { display: flex; max-width: 1400px; margin: 0 auto; min-height: calc(100vh - 57px); }
+
+/* Sidebar */
+.sidebar {
+  width: 260px; flex-shrink: 0;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
+  padding: 20px 0;
+  position: sticky; top: 57px;
+  height: calc(100vh - 57px);
+  overflow-y: auto;
+}
+.sidebar::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.nav-section { margin-bottom: 16px; }
+.nav-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary); padding: 0 20px; margin-bottom: 6px; }
+.nav-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 20px; font-size: 13px; cursor: pointer;
+  color: var(--text-secondary); border-left: 2px solid transparent;
+  transition: all 0.15s;
+}
+.nav-item:hover { background: var(--bg-secondary); color: var(--text); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-bg); font-weight: 600; }
+.nav-item .day-num { font-size: 11px; color: var(--text-tertiary); width: 24px; }
+.nav-item.completed .day-num { color: var(--green); }
+.nav-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.nav-dot.todo { background: var(--bg-tertiary); }
+.nav-dot.in-progress { background: var(--orange); }
+.nav-dot.done { background: var(--green); }
+
+/* Main content */
+.main { flex: 1; padding: 24px 32px; max-width: 1100px; }
+.main::-webkit-scrollbar { width: 6px; }
+
+/* === SECTIONS === */
+.section { margin-bottom: 40px; }
+.section-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.section-desc { font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; }
+
+/* Roadmap */
+.roadmap { display: flex; gap: 8px; margin-bottom: 12px; }
+.roadmap-week {
+  flex: 1; background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; cursor: pointer;
+  transition: all 0.15s; position: relative; overflow: hidden;
+}
+.roadmap-week:hover { border-color: var(--accent); box-shadow: var(--shadow-md); }
+.roadmap-week.current { border-color: var(--accent); background: var(--accent-bg); }
+.roadmap-week-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.roadmap-week-range { font-size: 11px; color: var(--text-tertiary); margin-bottom: 8px; }
+.roadmap-progress-bar { height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden; }
+.roadmap-progress-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+.roadmap-pct { font-size: 11px; font-weight: 600; margin-top: 4px; }
+
+/* Day Card */
+.day-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 12px;
+  overflow: hidden; transition: box-shadow 0.15s;
+}
+.day-card:hover { box-shadow: var(--shadow-md); }
+.day-card.expanded { box-shadow: var(--shadow-md); }
+.day-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; cursor: pointer; user-select: none;
+}
+.day-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 8px;
+  font-size: 13px; font-weight: 700; flex-shrink: 0;
+}
+.day-badge.review { background: var(--purple-light); color: var(--purple); }
+.day-badge.w1 { background: #fee2e2; color: #dc2626; }
+.day-badge.w2 { background: #dbeafe; color: #2563eb; }
+.day-badge.w3 { background: #dcfce7; color: #16a34a; }
+.day-badge.w4 { background: #fef3c7; color: #d97706; }
+.day-badge.w5 { background: #ede9fe; color: #7c3aed; }
+.day-info { flex: 1; min-width: 0; }
+.day-title { font-size: 15px; font-weight: 600; }
+.day-topics { font-size: 12px; color: var(--text-secondary); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.day-status { display: flex; align-items: center; gap: 8px; }
+.day-status-dot { width: 8px; height: 8px; border-radius: 50%; }
+.day-status-dot.todo { background: var(--bg-tertiary); }
+.day-status-dot.in-progress { background: var(--orange); }
+.day-status-dot.done { background: var(--green); }
+.day-chevron { color: var(--text-tertiary); transition: transform 0.2s; font-size: 12px; }
+.day-card.expanded .day-chevron { transform: rotate(90deg); }
+
+.day-body { display: none; padding: 0 20px 20px; border-top: 1px solid var(--border); }
+.day-card.expanded .day-body { display: block; }
+
+.day-section { margin-top: 16px; }
+.day-section-label {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--text-tertiary); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 6px;
+}
+.task-list { list-style: none; }
+.task-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 6px 0; font-size: 14px; cursor: pointer;
+}
+.task-item:hover { color: var(--accent); }
+.task-checkbox {
+  width: 18px; height: 18px; border: 1.5px solid var(--border);
+  border-radius: 4px; flex-shrink: 0; margin-top: 1px;
+  cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.task-item.done .task-checkbox { background: var(--green); border-color: var(--green); }
+.task-item.done .task-checkbox::after { content: '✓'; color: white; font-size: 12px; font-weight: bold; }
+.task-item.done .task-text { text-decoration: line-through; color: var(--text-tertiary); }
+.task-text { flex: 1; }
+.task-tag {
+  display: inline-block; font-size: 10px; font-weight: 600;
+  padding: 1px 6px; border-radius: 4px; margin-left: 6px;
+  vertical-align: middle;
+}
+.task-tag.core { background: var(--red-light); color: var(--red); }
+.task-tag.ext { background: var(--purple-light); color: var(--purple); }
+.task-tag.plus { background: var(--green-light); color: var(--green); }
+
+/* Mock interview */
+.mock-box { background: var(--bg-secondary); border-radius: var(--radius); padding: 12px 16px; margin-top: 8px; }
+.mock-title { font-size: 13px; font-weight: 600; color: var(--orange); margin-bottom: 6px; }
+.mock-questions { display: flex; flex-wrap: wrap; gap: 8px; }
+.mock-q {
+  font-size: 12px; padding: 4px 10px; border-radius: 6px;
+  background: var(--bg); border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.15s;
+}
+.mock-q:hover { border-color: var(--orange); color: var(--orange); }
+.mock-q.done { background: var(--green-light); border-color: var(--green); color: var(--green); text-decoration: line-through; }
+
+/* Tier-only content */
+.tier-only { display: none; }
+.tier-only.active { display: block; }
+
+/* Warning callout */
+.callout {
+  background: #fffbeb; border: 1px solid #fde68a;
+  border-radius: var(--radius); padding: 10px 14px;
+  font-size: 13px; color: #92400e; margin-top: 8px;
+  display: flex; gap: 8px; align-items: flex-start;
+}
+.callout-icon { flex-shrink: 0; }
+
+/* === ALGORITHM SECTION === */
+.algo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.algo-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+}
+.algo-card-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.algo-card-title .week-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: var(--bg-tertiary); color: var(--text-secondary); }
+.algo-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 0; font-size: 13px; cursor: pointer;
+}
+.algo-item:hover { color: var(--accent); }
+.algo-checkbox {
+  width: 16px; height: 16px; border: 1.5px solid var(--border);
+  border-radius: 4px; flex-shrink: 0; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.algo-item.done .algo-checkbox { background: var(--green); border-color: var(--green); }
+.algo-item.done .algo-checkbox::after { content: '✓'; color: white; font-size: 11px; font-weight: bold; }
+.algo-item.done .algo-text { text-decoration: line-through; color: var(--text-tertiary); }
+.algo-text { flex: 1; }
+.algo-link {
+  font-size: 11px; color: var(--text-tertiary); text-decoration: none;
+  padding: 1px 6px; border-radius: 4px; border: 1px solid var(--border);
+}
+.algo-link:hover { color: var(--accent); border-color: var(--accent); }
+
+/* === KEYWORD CARDS === */
+.flashcard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+.flashcard {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); cursor: pointer;
+  min-height: 120px; perspective: 600px;
+}
+.flashcard-inner {
+  position: relative; width: 100%; min-height: 120px;
+  transition: transform 0.4s; transform-style: preserve-3d;
+}
+.flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+.flashcard-front, .flashcard-back {
+  position: absolute; width: 100%; min-height: 120px;
+  backface-visibility: hidden; border-radius: var(--radius);
+  padding: 16px; display: flex; flex-direction: column; justify-content: center;
+}
+.flashcard-front {
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+.flashcard-back {
+  background: var(--accent-bg); border: 1px solid var(--accent-light);
+  transform: rotateY(180deg);
+}
+.flashcard-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 4px; }
+.flashcard-title { font-size: 15px; font-weight: 600; }
+.flashcard-content { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+.flashcard-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 8px; }
+
+/* === ERROR LIST === */
+.error-list-container { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); }
+.error-list-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.error-list-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.error-add-btn {
+  background: var(--accent); color: white; border: none;
+  padding: 5px 12px; border-radius: 6px; font-size: 12px;
+  cursor: pointer; font-weight: 500; transition: background 0.15s;
+}
+.error-add-btn:hover { background: #1d4ed8; }
+.error-list-body { max-height: 400px; overflow-y: auto; }
+.error-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 16px; border-bottom: 1px solid var(--bg-secondary);
+}
+.error-item:last-child { border-bottom: none; }
+.error-bullet { color: var(--red); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.error-text { flex: 1; font-size: 13px; }
+.error-delete {
+  color: var(--text-tertiary); cursor: pointer; font-size: 14px;
+  opacity: 0; transition: opacity 0.15s;
+}
+.error-item:hover .error-delete { opacity: 1; }
+.error-delete:hover { color: var(--red); }
+.error-input-row {
+  display: none; padding: 10px 16px; border-bottom: 1px solid var(--bg-secondary);
+  gap: 8px;
+}
+.error-input-row.visible { display: flex; }
+.error-input {
+  flex: 1; border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 10px; font-size: 13px; outline: none;
+}
+.error-input:focus { border-color: var(--accent); }
+.error-confirm {
+  background: var(--green); color: white; border: none;
+  padding: 6px 14px; border-radius: 6px; font-size: 12px;
+  cursor: pointer; font-weight: 500;
+}
+.error-confirm:hover { opacity: 0.9; }
+
+/* === CUSTOM KNOWLEDGE POINTS === */
+.custom-kp-list { list-style: none; margin-top: 6px; }
+.custom-kp-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 5px 0; font-size: 14px;
+}
+.custom-kp-item .task-checkbox {
+  width: 18px; height: 18px; border: 1.5px solid var(--accent);
+  border-radius: 4px; flex-shrink: 0; margin-top: 1px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-light);
+}
+.custom-kp-item .task-checkbox::after { content: '★'; color: var(--accent); font-size: 11px; }
+.custom-kp-item .kp-text { flex: 1; color: var(--text); }
+.custom-kp-item .kp-delete {
+  color: var(--text-tertiary); cursor: pointer; font-size: 13px;
+  opacity: 0; transition: opacity 0.15s;
+}
+.custom-kp-item:hover .kp-delete { opacity: 1; }
+.custom-kp-item .kp-delete:hover { color: var(--red); }
+.custom-kp-add-row {
+  display: none; gap: 8px; margin-top: 6px;
+}
+.custom-kp-add-row.visible { display: flex; }
+.custom-kp-add-row input {
+  flex: 1; border: 1px solid var(--border); border-radius: 6px;
+  padding: 5px 10px; font-size: 13px; outline: none;
+}
+.custom-kp-add-row input:focus { border-color: var(--accent); }
+.custom-kp-add-btn {
+  background: var(--accent-light); color: var(--accent); border: 1px solid var(--accent-light);
+  padding: 4px 12px; border-radius: 6px; font-size: 12px;
+  cursor: pointer; font-weight: 500; transition: all 0.15s;
+}
+.custom-kp-add-btn:hover { background: var(--accent); color: white; }
+.custom-kp-confirm {
+  background: var(--green); color: white; border: none;
+  padding: 5px 12px; border-radius: 6px; font-size: 12px;
+  cursor: pointer; font-weight: 500;
+}
+
+/* === DAILY NOTES === */
+.note-area {
+  width: 100%; min-height: 60px; border: 1px solid var(--border);
+  border-radius: 6px; padding: 8px 12px; font-size: 13px;
+  font-family: inherit; resize: vertical; outline: none;
+  background: var(--bg-secondary); color: var(--text);
+  transition: border-color 0.15s;
+}
+.note-area:focus { border-color: var(--accent); background: var(--bg); }
+.note-area::placeholder { color: var(--text-tertiary); }
+.note-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; }
+
+/* === BACKLOG === */
+.backlog-container { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); }
+.backlog-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.backlog-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.backlog-add-btn {
+  background: var(--accent); color: white; border: none;
+  padding: 5px 12px; border-radius: 6px; font-size: 12px;
+  cursor: pointer; font-weight: 500; transition: background 0.15s;
+}
+.backlog-add-btn:hover { background: #1d4ed8; }
+.backlog-input-row {
+  display: none; padding: 12px 16px; border-bottom: 1px solid var(--bg-secondary);
+  gap: 8px; flex-wrap: wrap;
+}
+.backlog-input-row.visible { display: flex; }
+.backlog-input-row input, .backlog-input-row select {
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 6px 10px; font-size: 13px; outline: none;
+}
+.backlog-input-row input:focus, .backlog-input-row select:focus { border-color: var(--accent); }
+.backlog-input-main { flex: 1; min-width: 200px; }
+.backlog-input-day { width: 90px; }
+.backlog-input-cat { width: 100px; }
+.backlog-confirm {
+  background: var(--green); color: white; border: none;
+  padding: 6px 14px; border-radius: 6px; font-size: 12px;
+  cursor: pointer; font-weight: 500;
+}
+.backlog-body { max-height: 500px; overflow-y: auto; }
+.backlog-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px 16px; border-bottom: 1px solid var(--bg-secondary);
+  transition: opacity 0.2s;
+}
+.backlog-item:last-child { border-bottom: none; }
+.backlog-item.done { opacity: 0.5; }
+.backlog-item.done .backlog-text { text-decoration: line-through; }
+.backlog-cat {
+  display: inline-block; font-size: 10px; font-weight: 600;
+  padding: 2px 8px; border-radius: 4px; flex-shrink: 0;
+}
+.backlog-cat.red { background: var(--red-light); color: var(--red); }
+.backlog-cat.yellow { background: #fef3c7; color: #d97706; }
+.backlog-cat.green { background: var(--green-light); color: var(--green); }
+.backlog-text { flex: 1; font-size: 13px; }
+.backlog-day-tag { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+.backlog-actions { display: flex; gap: 8px; align-items: center; }
+.backlog-check, .backlog-delete {
+  cursor: pointer; font-size: 14px; color: var(--text-tertiary);
+  transition: color 0.15s;
+}
+.backlog-check:hover { color: var(--green); }
+.backlog-delete:hover { color: var(--red); }
+.backlog-empty { padding: 32px 16px; text-align: center; color: var(--text-tertiary); font-size: 14px; }
+
+/* === PROJECT CASES === */
+.case-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.case-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+  border-left: 3px solid var(--accent);
+}
+.case-card-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.case-card-keywords {
+  font-size: 13px; color: var(--text-secondary); line-height: 1.8;
+}
+.case-card-keywords .kw {
+  display: inline-block; background: var(--bg-secondary);
+  padding: 2px 8px; border-radius: 4px; margin: 2px 0;
+  font-size: 12px; color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* === SYSTEM DESIGN === */
+.design-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.design-table th {
+  text-align: left; padding: 10px 14px; background: var(--bg-secondary);
+  font-weight: 600; border-bottom: 1px solid var(--border); font-size: 12px;
+  text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-secondary);
+}
+.design-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--bg-secondary);
+}
+.design-table tr:hover td { background: var(--bg-secondary); }
+.design-tag {
+  display: inline-block; font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 4px;
+}
+.design-tag.all { background: var(--accent-light); color: var(--accent); }
+.design-tag.deep { background: var(--purple-light); color: var(--purple); }
+
+/* === ELASTIC MECHANISM === */
+.elastic-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.elastic-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+}
+.elastic-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.elastic-icon { font-size: 18px; }
+.elastic-card-title { font-size: 14px; font-weight: 600; }
+.elastic-card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+/* === TIMELINE TABLE === */
+.timeline-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.timeline-table th {
+  text-align: left; padding: 8px 14px; background: var(--bg-secondary);
+  font-weight: 600; border-bottom: 1px solid var(--border); font-size: 12px;
+}
+.timeline-table td { padding: 8px 14px; border-bottom: 1px solid var(--bg-secondary); }
+.timeline-table .time-col { font-weight: 600; color: var(--accent); white-space: nowrap; }
+
+/* === MISC === */
+.week-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 24px 0 12px; font-size: 16px; font-weight: 700;
+}
+.week-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.week-divider .week-badge {
+  display: inline-block; width: 28px; height: 28px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: white;
+}
+.w1-bg { background: #dc2626; }
+.w2-bg { background: #2563eb; }
+.w3-bg { background: #16a34a; }
+.w4-bg { background: #d97706; }
+.w5-bg { background: #7c3aed; }
+
+.priority-list { list-style: none; counter-reset: pri; }
+.priority-list li {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 14px; border-bottom: 1px solid var(--bg-secondary);
+  font-size: 14px; counter-increment: pri;
+}
+.priority-list li::before {
+  content: counter(pri);
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent-light); color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+
+.tab-bar { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+.tab-btn {
+  border: none; background: transparent; padding: 8px 16px;
+  font-size: 14px; cursor: pointer; color: var(--text-secondary);
+  border-bottom: 2px solid transparent; font-weight: 500;
+  transition: all 0.15s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .main { padding: 16px; }
+  .header { padding: 10px 16px; }
+  .header h1 { font-size: 15px; }
+  .progress-info span:not(.progress-text) { display: none; }
+  .elastic-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <h1>☕ Java 面试冲刺 30 天</h1>
+  </div>
+  <div class="header-right">
+    <div class="tier-switcher" id="tierSwitcher">
+      <button class="tier-btn active" data-tier="3h">3 小时版</button>
+      <button class="tier-btn" data-tier="5h">5 小时版</button>
+      <button class="tier-btn" data-tier="6h">6 小时版</button>
+    </div>
+    <div class="progress-info">
+      <span>进度</span>
+      <div class="progress-bar"><div class="progress-fill" id="globalProgressFill" style="width:0%"></div></div>
+      <span class="progress-text" id="globalProgressText">0%</span>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar"></div>
+
+  <!-- MAIN -->
+  <div class="main" id="mainContent"></div>
+</div>
+
+<script>
+// ===================== DATA =====================
+const PLAN = {
+  weeks: [
+    { week: 1, title: "Java 基础 + 集合 + 并发", days: "Day 1-7", color: "w1" },
+    { week: 2, title: "JVM + MySQL", days: "Day 8-15", color: "w2" },
+    { week: 3, title: "Redis + Spring + SpringCloud", days: "Day 16-22", color: "w3" },
+    { week: 4, title: "MQ + Docker + 分布式 + 项目打磨", days: "Day 23-27", color: "w4" },
+    { week: 5, title: "算法复盘 + 模拟面试 + 查漏补缺", days: "Day 28-30", color: "w5" }
+  ],
+  days: [
+    { day: 1, week: 1, title: "Java 基础总复盘",
+      topics: "面向对象、抽象类/接口、final/static、equals/hashCode、String、Stream/Lambda、泛型擦除+PECS",
+      keyPoints: [
+        "面向对象三大特性", "抽象类和接口", "final、static、this、super",
+        "equals 和 hashCode", "String、StringBuilder、StringBuffer",
+        "Java 8 Stream / Lambda 常用操作（分组、去重、map、reduce）",
+        "泛型擦除 + PECS（? extends vs ? super）"
+      ],
+      mustKnow: [
+        "equals 和 == 的区别？", "String 为什么不可变？",
+        "StringBuilder 和 StringBuffer 区别？",
+        "Stream 怎么对一个 List 按字段分组去重？",
+        "泛型擦除是什么？? extends 和 ? super 区别？"
+      ],
+      mock: ["equals vs ==", "String 不可变", "Stream 分组"],
+      tier5: {
+        source: "String 源码 hashCode() 缓存、intern()",
+        practice: "写代码验证 String 不可变"
+      },
+      tier6: { ext: "网络——TCP 三次握手/四次挥手" }
+    },
+    { day: 2, week: 1, title: "HashMap",
+      topics: "HashMap 底层结构、put 流程、扩容机制、链表转红黑树、线程不安全",
+      keyPoints: ["HashMap 底层结构", "put 流程", "扩容机制", "链表转红黑树", "为什么线程不安全"],
+      mustKnow: [
+        "HashMap 底层原理？", "HashMap 什么时候扩容？",
+        "HashMap 什么时候转红黑树？", "HashMap 为什么线程不安全？"
+      ],
+      mock: ["HashMap put 流程", "扩容条件", "线程不安全原因"],
+      tier5: { source: "putVal()、resize()、treeifyBin()", practice: "IDEA debug 跟踪一次 put + 扩容" },
+      tier6: { ext: "Linux——top/free/df 基础命令" }
+    },
+    { day: 3, week: 1, title: "ConcurrentHashMap",
+      topics: "JDK 1.7 Segment 分段锁、JDK 1.8 CAS+synchronized、put 流程、size 统计、扩容协助",
+      keyPoints: ["JDK 1.7 Segment 分段锁", "JDK 1.8 CAS + synchronized", "put 流程", "size 统计", "扩容协助机制"],
+      mustKnow: [
+        "ConcurrentHashMap 怎么保证线程安全？",
+        "JDK 1.7 和 JDK 1.8 的 ConcurrentHashMap 区别？",
+        "ConcurrentHashMap 读操作为什么不加锁？"
+      ],
+      mock: ["CHM 线程安全机制", "JDK 1.7 vs 1.8 区别", "读不加锁原理"],
+      warning: "不要把 JDK 1.8 的 ConcurrentHashMap 说成还是 Segment 分段锁",
+      tier5: { source: "putVal() 的 CAS + synchronized", practice: "对比 HashMap 和 CHM 并发写入" },
+      tier6: { ext: "设计模式——单例模式 4 种写法" }
+    },
+    { day: 4, week: 1, title: "线程基础 + volatile + CAS",
+      topics: "线程生命周期、JMM、volatile、CAS、ABA 问题",
+      keyPoints: ["线程生命周期", "Java 内存模型", "volatile 可见性、有序性", "CAS 原理", "ABA 问题"],
+      mustKnow: [
+        "volatile 能保证原子性吗？", "CAS 是什么？有什么问题？",
+        "AtomicInteger 原理是什么？"
+      ],
+      mock: ["volatile 可见性 vs 原子性", "CAS 原理和缺陷", "JMM"],
+      note: "ThreadLocal 移到 Day 5 开头，跟锁放一起讲（线程隔离 vs 线程同步）",
+      tier5: { source: "AtomicInteger compareAndSet() + Unsafe", practice: "写代码验证 volatile 不保证原子性" },
+      tier6: { ext: "K8s——Pod/Container 概念" }
+    },
+    { day: 5, week: 1, title: "ThreadLocal + synchronized + ReentrantLock + AQS",
+      topics: "ThreadLocal 内存泄漏、synchronized 锁升级、偏向锁/轻量级锁/重量级锁、ReentrantLock、公平锁/非公平锁、AQS",
+      keyPoints: ["ThreadLocal 原理 + 内存泄漏", "synchronized 锁升级", "偏向锁、轻量级锁、重量级锁", "ReentrantLock", "公平锁、非公平锁", "AQS 基础"],
+      mustKnow: [
+        "ThreadLocal 为什么会导致内存泄漏？",
+        "synchronized 和 ReentrantLock 区别？",
+        "synchronized 锁升级过程？", "AQS 是什么？",
+        "公平锁和非公平锁区别？"
+      ],
+      mock: ["ThreadLocal 内存泄漏", "synchronized vs ReentrantLock", "AQS 原理"],
+      tier5: { source: "ReentrantLock lock() → acquire() → tryAcquire()", practice: "写代码复现死锁 + jstack 排查" },
+      tier6: { ext: "网络——HTTP/1.1 vs HTTP/2" }
+    },
+    { day: 6, week: 1, title: "线程池",
+      topics: "七大核心参数、execute 执行流程、有界/无界队列、拒绝策略、线程池 OOM、参数设置、CompletableFuture/ForkJoinPool",
+      keyPoints: ["七大核心参数", "execute 执行流程", "有界队列、无界队列", "拒绝策略", "线程池 OOM", "线程池参数怎么设置", "CompletableFuture / ForkJoinPool"],
+      mustKnow: [
+        "线程池核心参数有哪些？", "线程池任务提交流程？",
+        "为什么不建议用 Executors？",
+        "无界队列为什么会导致 OOM？",
+        "你项目里线程池 OOM 怎么解决？"
+      ],
+      mock: ["线程池参数", "任务提交流程", "线程池 OOM 场景题"],
+      tier5: { source: "ThreadPoolExecutor execute() + addWorker()", practice: "写代码触发四种拒绝策略" },
+      tier6: { ext: "Linux——tail/grep/awk 日志查看" }
+    },
+    { day: 7, week: 1, title: "第 1 周复盘", isReview: true,
+      topics: "开口讲 Day 1-6 全部问题、复述线程池 OOM 案例、整理并发高频题清单、维护易错清单、处理 🟡 关联型知识点",
+      tasks: [
+        "把 Day 1-6 的问题全部开口讲一遍",
+        "重点复述线程池 OOM 案例",
+        "整理一版「Java 并发高频题清单」",
+        "开始维护「易错清单」，从今天起每天更新",
+        "集中处理本周 🟡 关联型知识点"
+      ],
+      mock: ["HashMap 底层", "CHM 1.8 机制", "synchronized 锁升级", "线程池执行流程", "volatile 不保证原子性"],
+      tier5: { source: "重读 HashMap put 流程 + 线程池 execute 流程", practice: "用 JMH 测 HashMap vs CHM 性能" },
+      tier6: { mock60: "自我介绍 + 项目 + HashMap/CHM + synchronized + 线程池 + 算法（链表反转）" }
+    },
+    { day: 8, week: 2, title: "JVM 内存结构",
+      topics: "程序计数器、虚拟机栈、本地方法栈、堆、方法区/元空间、直接内存",
+      keyPoints: ["程序计数器", "虚拟机栈", "本地方法栈", "堆", "方法区 / 元空间", "直接内存"],
+      mustKnow: [
+        "JVM 内存结构有哪些？", "堆和栈区别？",
+        "什么情况下会出现 StackOverflowError / OOM？"
+      ],
+      mock: ["JVM 内存结构", "堆和栈区别", "OOM 场景"],
+      tier5: { practice: "写递归触发 StackOverflowError + 写死循环创建对象触发 OOM" },
+      tier6: { ext: "设计模式——工厂 + 抽象工厂" }
+    },
+    { day: 9, week: 2, title: "GC 与垃圾回收器",
+      topics: "判断对象存活、GC Roots、标记清除/复制/整理、新生代/老年代、Minor GC/Full GC、CMS/G1/ZGC",
+      keyPoints: ["判断对象是否可回收", "GC Roots", "标记清除、标记复制、标记整理", "新生代、老年代", "Minor GC、Full GC", "常见垃圾回收器（CMS、G1、ZGC）"],
+      mustKnow: [
+        "Java 怎么判断对象是否存活？", "什么是 GC Roots？",
+        "Minor GC 和 Full GC 区别？",
+        "常见垃圾回收算法有哪些？", "G1 和 CMS 区别？"
+      ],
+      mock: ["GC Roots", "Minor vs Full GC", "G1 vs CMS"],
+      tier5: { practice: "配置不同 GC 参数，用 jstat -gc 观察" },
+      tier6: { ext: "K8s——Service/Deployment" }
+    },
+    { day: 10, week: 2, title: "类加载机制 + 双亲委派",
+      topics: "类加载过程、双亲委派模型、JDK 8 vs JDK 9+ 类加载器、打破双亲委派：Tomcat、SPI",
+      keyPoints: ["类加载过程：加载 → 验证 → 准备 → 解析 → 初始化", "双亲委派模型", "JDK 8：Bootstrap / Extension / Application", "JDK 9+：Bootstrap / Platform / Application", "打破双亲委派：Tomcat、SPI"],
+      mustKnow: [
+        "类加载过程是什么？", "双亲委派模型是什么？为什么这样设计？",
+        "JDK 8 和 JDK 9+ 类加载器有什么变化？",
+        "Tomcat 为什么要打破双亲委派？"
+      ],
+      mock: ["类加载过程", "双亲委派模型", "打破双亲委派场景"],
+      tier5: { source: "ClassLoader.loadClass() 源码", practice: "手写一个自定义类加载器" },
+      tier6: { ext: "网络——HTTPS 握手过程" }
+    },
+    { day: 11, week: 2, title: "OOM 排查 + JVM 缓冲日",
+      topics: "jps/jstack/jmap/jstat/MAT、OOM 排查流程、CPU 飙高/死锁/Full GC 频繁排查",
+      tasks: [
+        "如果 Day 8-10 有没消化的内容，今天补",
+        "学会 jps、jstack、jmap、jstat、MAT 的基本用途",
+        "动手实操：写一段代码触发 OOM，用 jmap + MAT 走一遍排查流程",
+        "补充 CPU 飙高、死锁、Full GC 频繁的排查思路",
+        "整理 OOM 排查关键词卡片：背景→现象→工具→定位→原因→方案→结果"
+      ],
+      mustKnow: [],
+      mock: ["OOM 排查流程", "CPU 飙高排查", "jstack 排查死锁"],
+      tier5: { practice: "jmap dump + MAT 分析 + jstack 死锁 + top -Hp CPU 飙高" },
+      tier6: { ext: "Linux——文件权限 + 软硬链接" }
+    },
+    { day: 12, week: 2, title: "MySQL 索引",
+      topics: "B+ 树、聚簇索引、二级索引、回表、覆盖索引、最左前缀原则、索引失效",
+      keyPoints: ["B+ 树", "聚簇索引", "二级索引", "回表", "覆盖索引", "最左前缀原则", "索引失效"],
+      mustKnow: [
+        "MySQL 为什么用 B+ 树？", "什么是回表？",
+        "什么是覆盖索引？", "联合索引为什么遵循最左前缀？"
+      ],
+      mock: ["B+ 树原理", "回表 vs 覆盖索引", "最左前缀"],
+      tier5: { practice: "建表 + 加索引 + Explain 对比前后" },
+      tier6: { ext: "设计模式——策略 + 观察者" }
+    },
+    { day: 13, week: 2, title: "MySQL 事务 + MVCC",
+      topics: "ACID、隔离级别、脏读/不可重复读/幻读、MVCC、Read View、undo log、当前读/快照读",
+      keyPoints: ["ACID", "隔离级别", "脏读、不可重复读、幻读", "MVCC", "Read View", "undo log", "当前读、快照读"],
+      mustKnow: [
+        "MySQL 事务隔离级别有哪些？", "MVCC 原理是什么？",
+        "Read View 是什么？", "可重复读怎么解决不可重复读？"
+      ],
+      mock: ["事务隔离级别", "MVCC 原理", "Read View"],
+      tier5: { practice: "开两个会话，手动复现脏读/不可重复读/幻读" },
+      tier6: { ext: "K8s——ConfigMap/Secret" }
+    },
+    { day: 14, week: 2, title: "MySQL 锁 + 慢 SQL + 分库分表",
+      topics: "表锁/行锁/间隙锁/临键锁/死锁、Explain、慢 SQL 优化、分库分表、Sharding-JDBC/MyCat",
+      keyPoints: [
+        { text: "表锁、行锁、间隙锁、临键锁、死锁", tag: "core" },
+        { text: "Explain（动手执行，不只看理论）", tag: "core" },
+        { text: "慢 SQL 优化流程", tag: "core" },
+        { text: "分库分表（垂直拆分 vs 水平拆分）", tag: "ext" },
+        { text: "Sharding-JDBC / MyCat", tag: "ext" },
+        { text: "分片键选择、跨库查询问题", tag: "ext" }
+      ],
+      mustKnow: [
+        "MySQL 有哪些锁？", "什么是间隙锁？",
+        "慢 SQL 怎么排查？", "Explain 主要看哪些字段？",
+        "分库分表后怎么保证 ID 唯一？跨库 join 怎么解决？"
+      ],
+      mock: ["行锁 vs 间隙锁", "Explain 字段", "分库分表分片键选择"],
+      tier5: { practice: "写慢 SQL + Explain 分析 + 加索引优化 + 对比" },
+      tier6: { ext: "网络——TCP 粘包拆包" }
+    },
+    { day: 15, week: 2, title: "第 2 周复盘", isReview: true,
+      topics: "整理 OOM 排查案例 + 慢 SQL 优化案例关键词卡片、开口复述 JVM+MySQL 高频题、处理 🟡 关联型知识点",
+      tasks: [
+        "整理一个 OOM 排查案例（关键词卡片）",
+        "整理一个慢 SQL 优化案例（关键词卡片）",
+        "开口复述 JVM + MySQL 高频题",
+        "集中处理本周 🟡 关联型知识点",
+        "产出两段项目表达：线程池 OOM 排查案例 + 慢 SQL 优化案例"
+      ],
+      mock: ["双亲委派", "OOM 排查", "MySQL 索引失效场景", "MVCC 原理", "分库分表方案"],
+      tier5: { practice: "完整走一遍：造 OOM → dump → MAT → 定位 → 修复" },
+      tier6: { mock60: "JVM 内存 + GC + 类加载 + OOM 排查 + MySQL 索引 + MVCC + 算法（二叉树遍历）" }
+    },
+    { day: 16, week: 3, title: "Redis 基础和缓存问题",
+      topics: "五种数据结构、跳表/压缩列表/SDS、缓存穿透/击穿/雪崩、布隆过滤器、淘汰策略",
+      keyPoints: ["String、Hash、List、Set、ZSet", "底层数据结构：跳表、压缩列表、SDS", "缓存穿透", "缓存击穿", "缓存雪崩", "布隆过滤器", "Redis 淘汰策略（allkeys-lru vs volatile-lru，LFU 4.0 新增）"],
+      mustKnow: [
+        "Redis 常用数据结构？",
+        "ZSet 底层是什么？（小对象 ziplist/listpack，大对象 dict + skiplist）",
+        "缓存穿透 / 击穿 / 雪崩怎么解决？", "Redis 内存满了怎么办？"
+      ],
+      mock: ["Redis 数据结构", "三大缓存问题", "淘汰策略"],
+      tier5: { source: "Redis 跳表源码思路（zslInsert）", practice: "redis-cli 操作五种数据结构 + OBJECT ENCODING 看底层" },
+      tier6: { ext: "Linux——netstat/lsof 网络排查" }
+    },
+    { day: 17, week: 3, title: "Redis 分布式锁 + 一致性",
+      topics: "set nx ex、锁过期、看门狗机制、Redisson、缓存和数据库双写一致性、延迟双删、Canal/MQ 异步同步",
+      keyPoints: ["set nx ex", "锁过期问题", "看门狗机制", "Redisson", "缓存和数据库双写一致性", "延迟双删", "Canal / MQ 异步同步"],
+      mustKnow: [
+        "Redis 分布式锁怎么实现？", "Redis 锁误删怎么办？",
+        "缓存和数据库不一致怎么办？", "先删缓存还是先更新数据库？"
+      ],
+      mock: ["分布式锁实现", "锁误删", "缓存一致性方案"],
+      tier5: { source: "Redisson 看门狗源码思路（renewExpiration）", practice: "用 Redisson 写分布式锁 + 断点看续期" },
+      tier6: { ext: "设计模式——责任链 + 装饰器" }
+    },
+    { day: 18, week: 3, title: "Redis 持久化 + 高可用",
+      topics: "RDB、AOF、主从复制、哨兵、Cluster、大 key、热 key",
+      keyPoints: ["RDB", "AOF", "主从复制", "哨兵", "Cluster", "大 key", "热 key"],
+      mustKnow: [
+        "RDB 和 AOF 区别？", "Redis 主从复制原理？",
+        "哨兵机制是什么？", "Redis Cluster 怎么分片？"
+      ],
+      mock: ["RDB vs AOF", "哨兵机制", "Cluster 分片"],
+      tier5: { practice: "搭 Redis 主从 + 哨兵（Docker Compose）" },
+      tier6: { ext: "K8s——探针 + 滚动更新" }
+    },
+    { day: 19, week: 3, title: "Spring 核心",
+      topics: "IOC、Bean 生命周期、AOP、动态代理、循环依赖、三级缓存、Spring MVC 流程、Spring 设计模式",
+      keyPoints: [
+        { text: "IOC、Bean 生命周期、AOP、动态代理、循环依赖、三级缓存", tag: "core" },
+        { text: "Spring MVC 流程（DispatcherServlet → HandlerMapping → HandlerAdapter → ViewResolver）", tag: "plus" },
+        { text: "Spring 中的设计模式（工厂、代理、单例、模板方法、观察者）", tag: "plus" }
+      ],
+      mustKnow: [
+        "Spring IOC 是什么？", "Bean 生命周期？",
+        "Spring AOP 原理？", "Spring 怎么解决循环依赖？",
+        "Spring MVC 请求处理流程？"
+      ],
+      mock: ["Bean 生命周期", "AOP 原理", "循环依赖三级缓存"],
+      tier5: { source: "Spring DefaultSingletonBeanRegistry 三级缓存源码", practice: "IDEA debug 跟踪 Bean 创建全流程" },
+      tier6: { ext: "网络——DNS/CDN/反向代理" }
+    },
+    { day: 20, week: 3, title: "Spring 事务 + SpringBoot",
+      topics: "事务传播行为、事务失效场景、自动配置原理、Starter 原理、SpringBoot 启动流程",
+      keyPoints: ["Spring 事务传播行为", "事务失效场景", "自动配置原理", "Starter 原理", "SpringBoot 启动流程"],
+      mustKnow: [
+        "Spring 事务什么时候失效？", "事务传播行为有哪些？",
+        "SpringBoot 自动配置原理？", "SpringBoot 启动流程？"
+      ],
+      mock: ["事务失效场景", "事务传播行为", "SpringBoot 自动配置"],
+      tier5: { source: "@Transactional 代理源码 + DataSourceTransactionManager", practice: "写代码复现事务失效 3 种场景" },
+      tier6: { ext: "Linux——crontab + shell 脚本基础" }
+    },
+    { day: 21, week: 3, title: "SpringCloud / Nacos / Feign / Gateway",
+      topics: "Nacos 注册发现、配置中心长轮询、AP/CP、OpenFeign 调用链路、Gateway 路由、Sentinel 限流熔断",
+      keyPoints: ["Nacos 注册发现", "Nacos 配置中心长轮询", "Nacos AP / CP", "OpenFeign 调用链路", "Gateway 路由", "Sentinel 限流熔断"],
+      mustKnow: [
+        "Nacos 配置监听长轮询机制？", "Nacos 服务发现流程？",
+        "Nacos 挂了服务还能调用吗？", "OpenFeign 调用链路？", "Gateway 工作原理？"
+      ],
+      mock: ["Nacos 长轮询", "OpenFeign 调用链路", "Gateway 路由"],
+      warning: "Nacos 长轮询要讲清楚——客户端发起长轮询请求，服务端 hold 住请求，配置变更时立即返回，否则 30s 超时返回",
+      tier5: { source: "Nacos 客户端长轮询源码（ConfigService.getConfig）", practice: "搭 Nacos + 写 Feign 调用 + debug 跟踪" },
+      tier6: { ext: "设计模式——模板方法 + 适配器" }
+    },
+    { day: 22, week: 3, title: "第 3 周复盘", isReview: true,
+      topics: "整理 Redis 缓存一致性案例 + Nacos 长轮询回答 + OpenFeign+Gateway 调用链路、开口复述 Spring 高频题",
+      tasks: [
+        "整理 Redis 缓存一致性案例（关键词卡片）",
+        "整理 Nacos 长轮询回答",
+        "整理 OpenFeign + Gateway 调用链路",
+        "开口复述 Spring 高频题",
+        "集中处理本周 🟡 关联型知识点"
+      ],
+      mock: ["Redis 淘汰策略", "缓存一致性", "Bean 生命周期", "事务失效", "Nacos 长轮询"],
+      tier6: { mock60: "Redis 缓存 + 分布式锁 + Spring Bean + 事务 + Nacos + 算法（滑动窗口）" }
+    },
+    { day: 23, week: 4, title: "消息队列基础",
+      topics: "MQ 作用（解耦/削峰/异步）、Kafka/RocketMQ/RabbitMQ 区别、topic/partition/consumer group",
+      keyPoints: ["MQ 作用：解耦、削峰、异步", "Kafka / RocketMQ / RabbitMQ 区别", "topic、partition、consumer group"],
+      mustKnow: [
+        "为什么使用 MQ？", "MQ 有什么缺点？",
+        "Kafka 和 RocketMQ 区别？", "MQ 怎么实现削峰？"
+      ],
+      mock: ["MQ 的作用", "Kafka vs RocketMQ", "MQ 引入的缺点"],
+      tier5: { practice: "Docker 搭 RocketMQ / Kafka" },
+      tier6: { ext: "K8s——Ingress/网络策略" }
+    },
+    { day: 24, week: 4, title: "MQ 可靠性",
+      topics: "消息丢失、重复消费、消息积压、顺序消息、死信队列、延迟队列、幂等设计、RocketMQ 事务消息",
+      keyPoints: ["消息丢失", "重复消费", "消息积压", "顺序消息", "死信队列", "延迟队列", "幂等设计", "RocketMQ 事务消息（half message + 回查机制）"],
+      mustKnow: [
+        "MQ 消息丢失怎么办？", "MQ 重复消费怎么办？",
+        "MQ 消息积压怎么办？", "如何保证消息顺序？",
+        "RocketMQ 事务消息原理？"
+      ],
+      mock: ["消息丢失方案", "重复消费 + 幂等", "消息积压"],
+      tier5: { source: "RocketMQ 事务消息 half message 流程", practice: "写生产者 + 消费者 + 模拟消息丢失/重复" },
+      tier6: { ext: "网络——TCP 拥塞控制" }
+    },
+    { day: 25, week: 4, title: "Docker",
+      topics: "镜像/容器、Dockerfile、CMD/ENTRYPOINT/ENV/EXPOSE、容器日志、docker exec/logs",
+      keyPoints: ["镜像、容器", "Dockerfile", "CMD、ENTRYPOINT、ENV、EXPOSE", "容器日志", "docker exec、docker logs"],
+      mustKnow: [
+        "Docker 镜像和容器区别？", "CMD 和 ENTRYPOINT 区别？",
+        "JVM 参数应该写在哪里？", "容器 CPU 飙高怎么排查？"
+      ],
+      mock: ["镜像 vs 容器", "CMD vs ENTRYPOINT", "容器 CPU 飙高排查"],
+      warning: "CMD 和 ENTRYPOINT 不要混；-Xms/-Xmx 是 JVM 参数不是环境变量；ENV 不是 JVM 参数；Nginx 不负责启动 Java 进程",
+      tier5: { practice: "写 Dockerfile + docker build + docker run + docker logs" },
+      tier6: { ext: "Linux——性能排查（top -Hp, strace）" }
+    },
+    { day: 26, week: 4, title: "分布式基础",
+      topics: "分布式锁/事务/幂等/限流/熔断/降级/接口防重/分布式ID、CAP/BASE、限流算法、一致性哈希",
+      keyPoints: [
+        { text: "分布式锁、分布式事务、幂等、限流、熔断、降级、接口防重、分布式 ID", tag: "core" },
+        { text: "CAP / BASE 理论", tag: "core" },
+        { text: "限流算法（令牌桶、漏桶、滑动窗口）", tag: "core" },
+        { text: "一致性哈希（原理 + 虚拟节点解决数据倾斜）", tag: "ext" }
+      ],
+      mustKnow: [
+        "什么是接口幂等？", "分布式锁怎么实现？",
+        "分布式事务怎么解决？", "CAP 和 BASE 理论？",
+        "限流有哪些算法？", "一致性哈希解决什么问题？"
+      ],
+      mock: ["分布式事务方案", "CAP & BASE", "限流算法对比"],
+      tier5: { practice: "手写令牌桶限流 + 一致性哈希" },
+      tier6: { ext: "设计模式——Spring 中用到的设计模式复盘", design: "分布式 ID 生成器（雪花算法、号段模式、时钟回拨）" }
+    },
+    { day: 27, week: 4, title: "行为面试 + 系统设计入门", isReview: true,
+      topics: "行为面试准备、四维分析法系统设计、短链系统设计案例",
+      tasks: [
+        "准备行为面试回答（关键词卡片，不要背稿）",
+        "练习系统设计——四维分析法：数据量预估 → 存储选型 → 一致性方案 → 容错兜底",
+        "练习案例：设计一个短链系统"
+      ],
+      behaviorQuestions: [
+        "讲一件你做过最有挑战的事",
+        "你和同事有过技术分歧吗？怎么解决的？",
+        "你为什么想换工作？",
+        "你最近在学什么新技术？",
+        "你的职业规划是什么？"
+      ],
+      mock: ["MQ 可靠性", "Docker CMD vs ENTRYPOINT", "分布式事务", "一致性哈希", "行为面试——为什么换工作"],
+      tier6: { design: "设计一个 IM 系统（WebSocket、消息可靠性、已读/未读、离线消息、长连接管理）", mock60: "MQ 可靠性 + Docker + 分布式事务 + 系统设计（短链）+ 算法（LRU）" }
+    },
+    { day: 28, week: 5, title: "算法复盘（一）— 链表 + 二叉树 + 滑动窗口",
+      topics: "链表反转、快慢指针、滑动窗口、二叉树遍历、层序遍历、最大深度",
+      tasks: [
+        "链表反转（迭代 + 递归）",
+        "快慢指针（环检测、中间节点、倒数第 K 个）",
+        "滑动窗口：最长无重复子串（LeetCode 3）",
+        "二叉树前中后序遍历",
+        "二叉树层序遍历（BFS）",
+        "二叉树最大深度"
+      ],
+      mustKnow: [],
+      mock: ["MQ 顺序消息", "Redis 哨兵", "Spring MVC 流程", "分库分表", "线程池参数设置"],
+      tier6: { design: "设计一个配置中心（长轮询 vs 长连接、配置版本管理、灰度发布、推送 vs 拉取）" }
+    },
+    { day: 29, week: 5, title: "算法复盘（二）+ 系统设计 + 模拟面试（上半场）",
+      topics: "LRU 缓存、二分查找变体、TopK 问题、秒杀系统设计、模拟面试上半场",
+      tasks: [
+        "LRU 缓存（跟 HashMap / LinkedHashMap 结合）",
+        "二分查找变体（查找第一个/最后一个/插入位置）",
+        "TopK 问题（堆 / 快速选择）",
+        "系统设计：设计一个秒杀系统",
+        "模拟面试上半场（5 题）"
+      ],
+      mockUpper: [
+        "自我介绍", "项目介绍", "线程池 OOM",
+        "HashMap / ConcurrentHashMap", "JVM / OOM 排查"
+      ],
+      mock: [],
+      tier6: { mock60: "完整 10 题流程 + 行为面试 + 系统设计（秒杀）+ 算法（TopK）" }
+    },
+    { day: 30, week: 5, title: "模拟面试（下半场）+ 查漏补缺 + 最终背诵",
+      topics: "模拟面试下半场、查漏补缺、最终背诵",
+      tasks: [
+        "模拟面试下半场（5 题）",
+        "背高频题", "复述项目案例（关键词卡片）",
+        "修正易错清单 + 处理 🟢 加分清单",
+        "重点检查易错清单全部条目"
+      ],
+      mockLower: [
+        "MySQL 索引 / MVCC", "Redis 缓存一致性",
+        "Spring 事务 / Nacos 长轮询", "MQ 可靠性",
+        "Docker + 行为面试"
+      ],
+      mock: [],
+      tier6: { ext: "K8s 综合复盘" }
+    }
+  ],
+  algorithms: {
+    "3h": [
+      { week: 1, items: [
+        { title: "链表反转（迭代 + 递归）", lc: "206", days: "Day 1-2" },
+        { title: "快慢指针（环检测）", lc: "141", days: "Day 3-4" },
+        { title: "快慢指针（倒数第 K 个）", lc: "19", days: "Day 5-6" },
+        { title: "复盘：链表三题重写", lc: "", days: "Day 7" }
+      ]},
+      { week: 2, items: [
+        { title: "二叉树前中后序遍历", lc: "144/94/145", days: "Day 8-9" },
+        { title: "二叉树层序遍历（BFS）", lc: "102", days: "Day 10-11" },
+        { title: "二叉树最大深度", lc: "104", days: "Day 12-13" },
+        { title: "复盘：二叉树三题重写", lc: "", days: "Day 14-15" }
+      ]},
+      { week: 3, items: [
+        { title: "滑动窗口：最长无重复子串", lc: "3", days: "Day 16-17" },
+        { title: "二分查找变体（查找插入位置）", lc: "35", days: "Day 18-19" },
+        { title: "二分查找变体（查找第一个/最后一个）", lc: "34", days: "Day 20-21" },
+        { title: "复盘：滑动窗口 + 二分重写", lc: "", days: "Day 22" }
+      ]},
+      { week: 4, items: [
+        { title: "LRU 缓存设计", lc: "146", days: "Day 23-24" },
+        { title: "TopK 问题（堆 / 快速选择）", lc: "215", days: "Day 25-26" },
+        { title: "复盘：LRU + TopK 重写", lc: "", days: "Day 27" }
+      ]},
+      { week: 5, items: [
+        { title: "综合复盘：所有题型限时重写", lc: "", days: "Day 28-30" }
+      ]}
+    ],
+    "5h": [
+      { week: 1, items: [
+        { title: "合并两个有序链表", lc: "21", days: "新增" }
+      ]},
+      { week: 2, items: [
+        { title: "对称二叉树", lc: "101", days: "新增" },
+        { title: "路径总和", lc: "112", days: "新增" }
+      ]},
+      { week: 3, items: [
+        { title: "三数之和", lc: "15", days: "新增" },
+        { title: "岛屿数量", lc: "200", days: "新增" }
+      ]},
+      { week: 4, items: [
+        { title: "用栈实现队列", lc: "232", days: "新增" },
+        { title: "最小栈", lc: "155", days: "新增" }
+      ]},
+      { week: 5, items: [
+        { title: "动态规划入门：爬楼梯", lc: "70", days: "新增" },
+        { title: "最大子数组和", lc: "53", days: "新增" }
+      ]}
+    ],
+    "6h": [
+      { week: 1, items: [
+        { title: "爬楼梯", lc: "70", days: "DP 新增" },
+        { title: "斐波那契", lc: "509", days: "DP 新增" },
+        { title: "两数之和", lc: "1", days: "其他新增" }
+      ]},
+      { week: 2, items: [
+        { title: "打家劫舍", lc: "198", days: "DP 新增" },
+        { title: "最大子数组和", lc: "53", days: "DP 新增" }
+      ]},
+      { week: 3, items: [
+        { title: "零钱兑换", lc: "322", days: "DP 新增" },
+        { title: "最长递增子序列", lc: "300", days: "DP 新增" }
+      ]},
+      { week: 4, items: [
+        { title: "编辑距离", lc: "72", days: "DP 新增" },
+        { title: "背包问题", lc: "416", days: "DP 新增" }
+      ]},
+      { week: 5, items: [
+        { title: "DP 综合复盘", lc: "", days: "DP" },
+        { title: "全排列", lc: "46", days: "其他新增" },
+        { title: "括号生成", lc: "22", days: "其他新增" }
+      ]}
+    ]
+  },
+  flashcards: [
+    { title: "HashMap", keywords: "基于拉链法的哈希表结构 → 底层数组+链表/红黑树，put 流程分三步 → JDK 8 引入红黑树和尾插法 → 线程不安全，并发场景用 ConcurrentHashMap" },
+    { title: "线程池 OOM 排查", keywords: "数据采集任务量大 | 无界队列堆积 | jmap + MAT 分析堆 dump | 堆内存撑爆 | 改有界队列 + CallerRunsPolicy + 分批提交 + 背压 | 压测后内存稳定" },
+    { title: "慢 SQL 优化", keywords: "接口响应慢 | 慢查询日志定位 | Explain 看 type/rows/Extra | 全表扫描 + 未走索引 | 加联合索引 + 覆盖索引优化 | 查询时间显著下降" },
+    { title: "Redis 缓存一致性", keywords: "高频读取商品信息 | 先更新 DB 再删缓存 | 并发场景短暂不一致 | 延迟双删 / Canal 订阅 binlog / MQ 异步同步 | 最终一致" },
+    { title: "MQ 消息积压", keywords: "消费速度跟不上生产 | 消费者处理耗时 | 临时扩容消费者 + 线程池并行消费 | 修复后逐步消化积压 | 增加监控告警阈值" },
+    { title: "Nacos 长轮询 + OpenFeign", keywords: "客户端长轮询请求 | 服务端 hold 29.5s | 配置变更立即返回 | 客户端拉取新配置 | OpenFeign 动态代理 → 负载均衡 → 选择实例 → HTTP 调用" },
+    { title: "ConcurrentHashMap", keywords: "JDK 1.7 Segment 分段锁 → JDK 1.8 CAS + synchronized → put 流程：CAS 写空桶 / synchronized 写链表头 → size 用 CounterCell → 多线程协助扩容" },
+    { title: "AQS", keywords: "核心：state + CLH 变体队列 → 独占/共享模式 → tryAcquire/tryRelease → ReentrantLock/Semaphore/CountDownLatch 底层" },
+    { title: "Spring 循环依赖", keywords: "三级缓存：singletonObjects / earlySingletonObjects / singletonFactories → 提前暴露半成品 Bean → AOP 代理提前 → 只能解决单例 setter 注入" },
+    { title: "MVCC", keywords: "Read View + undo log 版本链 → 可重复读：事务开始时创建 Read View → RC：每次查询创建新 Read View → 判断可见性： trx_id < min_trx_id 可见" }
+  ],
+  systemDesign: [
+    { name: "短链系统", tier: "all", points: "发号器、62 进制、缓存策略" },
+    { name: "秒杀系统", tier: "all", points: "库存扣减、Lua 原子操作、削峰" },
+    { name: "IM 系统", tier: "deep", points: "WebSocket、消息可靠性、已读/未读、离线消息" },
+    { name: "配置中心", tier: "deep", points: "长轮询 vs 长连接、配置版本管理、灰度发布" },
+    { name: "分布式 ID 生成器", tier: "deep", points: "雪花算法、号段模式、时钟回拨" }
+  ],
+  priorityList: [
+    "线程池", "HashMap / ConcurrentHashMap", "JVM / OOM 排查",
+    "MySQL 索引 / 事务 / MVCC", "Redis 缓存问题 / 分布式锁",
+    "Spring 事务 / Bean 生命周期", "Nacos / Feign / Gateway",
+    "MQ 可靠性", "Docker", "分布式事务 / 幂等 / 限流",
+    "算法（LRU + 链表 + 二叉树 + 滑动窗口）", "系统设计（短链 + 秒杀）"
+  ],
+  tierSchedules: {
+    "3h": [
+      { time: "20 min", content: "复习 + 背诵" },
+      { time: "80 min", content: "核心知识学习" },
+      { time: "25 min", content: "关键词卡片" },
+      { time: "20 min", content: "算法练习（每天 1 道）" },
+      { time: "15 min", content: "开口复述" },
+      { time: "20 min", content: "晚间模拟（3 题）" }
+    ],
+    "5h": [
+      { time: "30 min", content: "复习 + 背诵" },
+      { time: "90 min", content: "核心知识学习" },
+      { time: "45 min", content: "源码深读" },
+      { time: "45 min", content: "算法练习（1 新 + 1 旧）" },
+      { time: "30 min", content: "关键词卡片" },
+      { time: "30 min", content: "动手实操" },
+      { time: "20 min", content: "开口复述" },
+      { time: "30 min", content: "晚间模拟（5 题）" }
+    ],
+    "6h": [
+      { time: "30 min", content: "复习 + 背诵" },
+      { time: "90 min", content: "核心知识学习" },
+      { time: "45 min", content: "源码深读" },
+      { time: "30 min", content: "扩展专题（轮转）" },
+      { time: "60 min", content: "算法练习（1 新 + 1 旧 + 1 DP）" },
+      { time: "30 min", content: "关键词卡片" },
+      { time: "30 min", content: "动手实操" },
+      { time: "20 min", content: "开口复述" },
+      { time: "25 min", content: "晚间模拟（5 题）" }
+    ]
+  },
+  defaultErrors: [
+    "ConcurrentHashMap 不要说成 JDK 1.8 还是 Segment",
+    "CMD 和 ENTRYPOINT 不要混",
+    "JVM 参数不要说成环境变量",
+    "Nacos 长轮询要讲清楚",
+    "线程池 OOM 要讲清楚排查过程",
+    "Redis 一致性不要只说「删缓存」",
+    "volatile 不保证原子性",
+    "事务失效场景（自调用、非 public、异常被吞）",
+    "ThreadLocal 内存泄漏原因",
+    "双亲委派不要忘了说「为什么要这样设计」",
+    "分库分表分片键选择要讲清楚",
+    "Redis 淘汰策略不要只说 LRU"
+  ],
+  extTopics: [
+    { round: 1, title: "计算机网络", content: "TCP 三次握手/四次挥手、HTTP/1.1 vs HTTP/2、HTTPS 握手、TCP 粘包拆包" },
+    { round: 2, title: "Linux 基础", content: "top/free/df/netstat/lsof、查看日志 tail/grep/awk、文件权限、软硬链接" },
+    { round: 3, title: "设计模式", content: "单例（饿汉/懒汉/DCL/枚举）、工厂/抽象工厂、策略、观察者、责任链、装饰器" },
+    { round: 4, title: "K8s 基础", content: "Pod/Service/Deployment/ConfigMap/Ingress、探针（liveness/readiness）、滚动更新" }
+  ]
+};
+
+// ===================== STATE =====================
+let currentTier = "3h";
+let currentTab = "roadmap";
+let expandedDay = null;
+let state = { tasks: {}, mock: {}, algo: {}, errors: [...PLAN.defaultErrors], customKp: {}, notes: {}, backlog: [] };
+
+// Load state
+try {
+  const saved = localStorage.getItem("java-interview-state");
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    state = { ...state, ...parsed };
+    if (!state.errors || !state.errors.length) state.errors = [...PLAN.defaultErrors];
+  }
+} catch(e) {}
+
+function saveState() {
+  localStorage.setItem("java-interview-state", JSON.stringify(state));
+}
+
+function taskId(day, type, idx) {
+  return `d${day}-${type}-${idx}`;
+}
+function mockId(day, idx) {
+  return `d${day}-mock-${idx}`;
+}
+function algoId(week, title) {
+  return `w${week}-${title}`;
+}
+
+// ===================== RENDER =====================
+function renderSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  let html = '';
+
+  // Nav sections
+  html += `<div class="nav-section">
+    <div class="nav-section-title">导航</div>
+    <div class="nav-item ${currentTab==='roadmap'?'active':''}" onclick="switchTab('roadmap')">
+      <span class="nav-dot todo"></span> 路线图总览
+    </div>
+    <div class="nav-item ${currentTab==='daily'?'active':''}" onclick="switchTab('daily')">
+      <span class="nav-dot todo"></span> 每日任务
+    </div>
+    <div class="nav-item ${currentTab==='algo'?'active':''}" onclick="switchTab('algo')">
+      <span class="nav-dot todo"></span> 算法刷题
+    </div>
+    <div class="nav-item ${currentTab==='cards'?'active':''}" onclick="switchTab('cards')">
+      <span class="nav-dot todo"></span> 关键词卡片
+    </div>
+    <div class="nav-item ${currentTab==='cases'?'active':''}" onclick="switchTab('cases')">
+      <span class="nav-dot todo"></span> 项目案例
+    </div>
+    <div class="nav-item ${currentTab==='design'?'active':''}" onclick="switchTab('design')">
+      <span class="nav-dot todo"></span> 系统设计
+    </div>
+    <div class="nav-item ${currentTab==='errors'?'active':''}" onclick="switchTab('errors')">
+      <span class="nav-dot todo"></span> 易错清单
+    </div>
+    <div class="nav-item ${currentTab==='backlog'?'active':''}" onclick="switchTab('backlog')">
+      <span class="nav-dot todo"></span> 待补清单
+    </div>
+  </div>`;
+
+  // Days
+  PLAN.weeks.forEach(w => {
+    html += `<div class="nav-section">
+      <div class="nav-section-title">${w.title}</div>`;
+    PLAN.days.filter(d => d.week === w.week).forEach(d => {
+      const done = isDayDone(d.day);
+      const inProg = isDayInProgress(d.day);
+      const dotClass = done ? 'done' : (inProg ? 'in-progress' : 'todo');
+      html += `<div class="nav-item ${currentTab==='daily'&&expandedDay===d.day?'active':''} ${done?'completed':''}" onclick="switchTab('daily'); expandDay(${d.day})">
+        <span class="nav-dot ${dotClass}"></span>
+        <span class="day-num">D${d.day}</span> ${d.title}
+      </div>`;
+    });
+    html += `</div>`;
+  });
+
+  sidebar.innerHTML = html;
+}
+
+function isDayDone(day) {
+  const d = PLAN.days.find(x => x.day === day);
+  if (!d) return false;
+  const allTasks = getAllTasksForDay(d);
+  if (!allTasks.length) return false;
+  return allTasks.every(t => state.tasks[t.id]);
+}
+function isDayInProgress(day) {
+  const d = PLAN.days.find(x => x.day === day);
+  if (!d) return false;
+  const allTasks = getAllTasksForDay(d);
+  return allTasks.some(t => state.tasks[t.id]) && !allTasks.every(t => state.tasks[t.id]);
+}
+
+function getAllTasksForDay(d) {
+  const tasks = [];
+  const items = d.keyPoints || d.tasks || [];
+  items.forEach((_, i) => {
+    tasks.push({ id: taskId(d.day, 'kp', i) });
+  });
+  d.mustKnow?.forEach((_, i) => {
+    tasks.push({ id: taskId(d.day, 'mk', i) });
+  });
+  d.mock?.forEach((_, i) => {
+    tasks.push({ id: mockId(d.day, i) });
+  });
+  return tasks;
+}
+
+function calcGlobalProgress() {
+  let total = 0, done = 0;
+  PLAN.days.forEach(d => {
+    const tasks = getAllTasksForDay(d);
+    total += tasks.length;
+    done += tasks.filter(t => state.tasks[t.id]).length;
+  });
+  // Algorithms
+  Object.entries(PLAN.algorithms).forEach(([tier, weeks]) => {
+    weeks.forEach(w => {
+      w.items.forEach(item => {
+        const id = algoId(w.week, item.title);
+        total++;
+        if (state.algo[id]) done++;
+      });
+    });
+  });
+  return total ? Math.round(done / total * 100) : 0;
+}
+
+function updateProgress() {
+  const pct = calcGlobalProgress();
+  document.getElementById("globalProgressFill").style.width = pct + "%";
+  document.getElementById("globalProgressText").textContent = pct + "%";
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  expandedDay = null;
+  renderSidebar();
+  renderMain();
+}
+
+function expandDay(day) {
+  expandedDay = expandedDay === day ? null : day;
+  renderSidebar();
+  renderMain();
+}
+
+function renderMain() {
+  const main = document.getElementById("mainContent");
+  if (currentTab === 'roadmap') main.innerHTML = renderRoadmap();
+  else if (currentTab === 'daily') main.innerHTML = renderDaily();
+  else if (currentTab === 'algo') main.innerHTML = renderAlgo();
+  else if (currentTab === 'cards') main.innerHTML = renderCards();
+  else if (currentTab === 'cases') main.innerHTML = renderCases();
+  else if (currentTab === 'design') main.innerHTML = renderDesign();
+  else if (currentTab === 'errors') main.innerHTML = renderErrors();
+  else if (currentTab === 'backlog') main.innerHTML = renderBacklog();
+  updateProgress();
+}
+
+// --- Roadmap ---
+function renderRoadmap() {
+  let html = `<div class="section">
+    <div class="section-title">30 天路线图</div>
+    <div class="section-desc">5 周冲刺计划，点击查看每周详情</div>
+    <div class="roadmap">`;
+
+  PLAN.weeks.forEach(w => {
+    const weekDays = PLAN.days.filter(d => d.week === w.week);
+    let total = 0, done = 0;
+    weekDays.forEach(d => {
+      const tasks = getAllTasksForDay(d);
+      total += tasks.length;
+      done += tasks.filter(t => state.tasks[t.id]).length;
+    });
+    const pct = total ? Math.round(done/total*100) : 0;
+    const colorMap = { w1:'#dc2626', w2:'#2563eb', w3:'#16a34a', w4:'#d97706', w5:'#7c3aed' };
+    html += `<div class="roadmap-week" onclick="switchTab('daily')">
+      <div class="roadmap-week-title">${w.title}</div>
+      <div class="roadmap-week-range">${w.days} · ${weekDays.length} 天</div>
+      <div class="roadmap-progress-bar"><div class="roadmap-progress-fill" style="width:${pct}%;background:${colorMap[w.color]}"></div></div>
+      <div class="roadmap-pct" style="color:${colorMap[w.color]}">${pct}%</div>
+    </div>`;
+  });
+  html += `</div></div>`;
+
+  // Tier schedule
+  html += `<div class="section">
+    <div class="section-title">每日时间分配</div>
+    <div class="section-desc">当前档位：${currentTier === '3h' ? '3 小时基础档' : currentTier === '5h' ? '5 小时进阶档' : '6 小时深度档'}</div>
+    <table class="timeline-table">
+      <thead><tr><th>时段</th><th>时长</th><th>内容</th></tr></thead>
+      <tbody>`;
+  PLAN.tierSchedules[currentTier].forEach(s => {
+    html += `<tr><td class="time-col">${s.time}</td><td>${s.time}</td><td>${s.content}</td></tr>`;
+  });
+  html += `</tbody></table>
+  </div>`;
+
+  // Elastic mechanism
+  html += `<div class="section">
+    <div class="section-title">弹性机制</div>
+    <div class="section-desc">遇到计划外知识点时的处理规则</div>
+    <div class="elastic-grid">
+      <div class="elastic-card">
+        <div class="elastic-card-header"><span class="elastic-icon">🔴</span><span class="elastic-card-title">阻塞型</span></div>
+        <div class="elastic-card-desc">不学这个，后面的内容学不懂。立刻学到够用为止，当天内容顺延到次日。最多占用当天 30 分钟。</div>
+      </div>
+      <div class="elastic-card">
+        <div class="elastic-card-header"><span class="elastic-icon">🟡</span><span class="elastic-card-title">关联型</span></div>
+        <div class="elastic-card-desc">学了能加深理解，但不学也能继续。记到「待补清单」，复盘日集中补。</div>
+      </div>
+      <div class="elastic-card">
+        <div class="elastic-card-header"><span class="elastic-icon">🟢</span><span class="elastic-card-title">加分型</span></div>
+        <div class="elastic-card-desc">面试可能加分，但非高频。记到「加分清单」，Day 30 查漏补缺。</div>
+      </div>
+    </div>
+  </div>`;
+
+  // Priority
+  html += `<div class="section">
+    <div class="section-title">保命优先级</div>
+    <div class="section-desc">时间不够时，按此顺序保命</div>
+    <ol class="priority-list">`;
+  PLAN.priorityList.forEach(p => { html += `<li>${p}</li>`; });
+  html += `</ol></div>`;
+
+  // Ext topics (6h only)
+  if (currentTier === '6h') {
+    html += `<div class="section">
+      <div class="section-title">扩展专题轮转表</div>
+      <div class="section-desc">6 小时版专属，30 分钟/天，四天一轮</div>
+      <table class="timeline-table">
+        <thead><tr><th>轮次</th><th>专题</th><th>内容</th></tr></thead>
+        <tbody>`;
+    PLAN.extTopics.forEach(e => {
+      html += `<tr><td class="time-col">第 ${e.round} 轮</td><td><strong>${e.title}</strong></td><td>${e.content}</td></tr>`;
+    });
+    html += `</tbody></table></div>`;
+  }
+
+  return html;
+}
+
+// --- Daily ---
+function renderDaily() {
+  let html = `<div class="section">
+    <div class="section-title">每日任务</div>
+    <div class="section-desc">点击展开每天的学习内容，勾选完成追踪进度</div>`;
+
+  PLAN.weeks.forEach(w => {
+    html += `<div class="week-divider"><span class="week-badge ${w.color}-bg">${w.week}</span> ${w.title} <span style="font-size:13px;color:var(--text-secondary);font-weight:400">${w.days}</span></div>`;
+    PLAN.days.filter(d => d.week === w.week).forEach(d => {
+      html += renderDayCard(d, w.color);
+    });
+  });
+
+  html += `</div>`;
+  return html;
+}
+
+function renderDayCard(d, weekColor) {
+  const expanded = expandedDay === d.day;
+  const done = isDayDone(d.day);
+  const inProg = isDayInProgress(d.day);
+  const dotClass = done ? 'done' : (inProg ? 'in-progress' : 'todo');
+
+  let html = `<div class="day-card ${expanded?'expanded':''}" id="day-${d.day}">
+    <div class="day-header" onclick="expandDay(${d.day})">
+      <div class="day-badge ${d.isReview?'review':weekColor}">${d.isReview?'复':'D'+d.day}</div>
+      <div class="day-info">
+        <div class="day-title">${d.title}</div>
+        <div class="day-topics">${d.topics || ''}</div>
+      </div>
+      <div class="day-status">
+        <div class="day-status-dot ${dotClass}"></div>
+        <span class="day-chevron">▶</span>
+      </div>
+    </div>
+    <div class="day-body">`;
+
+  if (expanded) {
+    // Key points / Tasks
+    const items = d.keyPoints || d.tasks || [];
+    if (items.length) {
+      html += `<div class="day-section">
+        <div class="day-section-label">${d.tasks ? '📋 任务清单' : '📌 重点知识'}</div>
+        <ul class="task-list">`;
+      items.forEach((item, i) => {
+        const text = typeof item === 'string' ? item : item.text;
+        const tag = typeof item === 'object' ? item.tag : null;
+        const id = taskId(d.day, d.tasks ? 'task' : 'kp', i);
+        const isChecked = state.tasks[id];
+        const tagHtml = tag === 'core' ? '<span class="task-tag core">核心</span>' :
+                        tag === 'ext' ? '<span class="task-tag ext">扩展</span>' :
+                        tag === 'plus' ? '<span class="task-tag plus">加分</span>' : '';
+        html += `<li class="task-item ${isChecked?'done':''}" onclick="toggleTask('${id}')">
+          <div class="task-checkbox"></div>
+          <span class="task-text">${text}${tagHtml}</span>
+        </li>`;
+      });
+      html += `</ul></div>`;
+    }
+
+    // Must know questions
+    if (d.mustKnow && d.mustKnow.length) {
+      html += `<div class="day-section">
+        <div class="day-section-label">❓ 必会题</div>
+        <ul class="task-list">`;
+      d.mustKnow.forEach((q, i) => {
+        const id = taskId(d.day, 'mk', i);
+        const isChecked = state.tasks[id];
+        html += `<li class="task-item ${isChecked?'done':''}" onclick="toggleTask('${id}')">
+          <div class="task-checkbox"></div>
+          <span class="task-text">${q}</span>
+        </li>`;
+      });
+      html += `</ul></div>`;
+    }
+
+    // Behavior questions
+    if (d.behaviorQuestions) {
+      html += `<div class="day-section">
+        <div class="day-section-label">🎯 行为面试题</div>
+        <ul class="task-list">`;
+      d.behaviorQuestions.forEach((q, i) => {
+        const id = taskId(d.day, 'bq', i);
+        const isChecked = state.tasks[id];
+        html += `<li class="task-item ${isChecked?'done':''}" onclick="toggleTask('${id}')">
+          <div class="task-checkbox"></div>
+          <span class="task-text">${q}</span>
+        </li>`;
+      });
+      html += `</ul></div>`;
+    }
+
+    // Mock upper
+    if (d.mockUpper) {
+      html += `<div class="day-section">
+        <div class="day-section-label">🎤 模拟面试上半场</div>
+        <ul class="task-list">`;
+      d.mockUpper.forEach((q, i) => {
+        const id = taskId(d.day, 'mu', i);
+        const isChecked = state.tasks[id];
+        html += `<li class="task-item ${isChecked?'done':''}" onclick="toggleTask('${id}')">
+          <div class="task-checkbox"></div>
+          <span class="task-text">${q}</span>
+        </li>`;
+      });
+      html += `</ul></div>`;
+    }
+
+    // Mock lower
+    if (d.mockLower) {
+      html += `<div class="day-section">
+        <div class="day-section-label">🎤 模拟面试下半场</div>
+        <ul class="task-list">`;
+      d.mockLower.forEach((q, i) => {
+        const id = taskId(d.day, 'ml', i);
+        const isChecked = state.tasks[id];
+        html += `<li class="task-item ${isChecked?'done':''}" onclick="toggleTask('${id}')">
+          <div class="task-checkbox"></div>
+          <span class="task-text">${q}</span>
+        </li>`;
+      });
+      html += `</ul></div>`;
+    }
+
+    // Mock interview
+    if (d.mock && d.mock.length) {
+      html += `<div class="day-section">
+        <div class="mock-box">
+          <div class="mock-title">🎤 晚间模拟（${d.mock.length} 题）</div>
+          <div class="mock-questions">`;
+      d.mock.forEach((q, i) => {
+        const id = mockId(d.day, i);
+        const isChecked = state.mock[id];
+        html += `<span class="mock-q ${isChecked?'done':''}" onclick="toggleMock('${id}')">${q}</span>`;
+      });
+      html += `</div></div></div>`;
+    }
+
+    // Warning
+    if (d.warning) {
+      html += `<div class="callout"><span class="callout-icon">⚠️</span><span>${d.warning}</span></div>`;
+    }
+    if (d.note) {
+      html += `<div class="callout" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af"><span class="callout-icon">💡</span><span>${d.note}</span></div>`;
+    }
+
+    // Tier 5
+    if (currentTier === '5h' || currentTier === '6h') {
+      if (d.tier5) {
+        html += `<div class="day-section">
+          <div class="day-section-label">📖 进阶档内容</div>`;
+        if (d.tier5.source) {
+          const id = taskId(d.day, 'src', 0);
+          const isChecked = state.tasks[id];
+          html += `<ul class="task-list">
+            <li class="task-item ${isChecked?'done':''}" onclick="toggleTask('${id}')">
+              <div class="task-checkbox"></div><span class="task-text">源码深读：${d.tier5.source}</span>
+            </li></ul>`;
+        }
+        if (d.tier5.practice) {
+          const id = taskId(d.day, 'prac', 0);
+          const isChecked = state.tasks[id];
+          html += `<ul class="task-list">
+            <li class="task-item ${isChecked?'done':''}" onclick="toggleTask('${id}')">
+              <div class="task-checkbox"></div><span class="task-text">动手实操：${d.tier5.practice}</span>
+            </li></ul>`;
+        }
+        html += `</div>`;
+      }
+    }
+
+    // Tier 6
+    if (currentTier === '6h') {
+      if (d.tier6) {
+        html += `<div class="day-section">
+          <div class="day-section-label">🔧 深度档内容</div>`;
+        if (d.tier6.ext) {
+          const id = taskId(d.day, 'ext', 0);
+          const isChecked = state.tasks[id];
+          html += `<ul class="task-list">
+            <li class="task-item ${isChecked?'done':''}" onclick="toggleTask('${id}')">
+              <div class="task-checkbox"></div><span class="task-text">扩展专题：${d.tier6.ext}</span>
+            </li></ul>`;
+        }
+        if (d.tier6.design) {
+          const id = taskId(d.day, 'des', 0);
+          const isChecked = state.tasks[id];
+          html += `<ul class="task-list">
+            <li class="task-item ${isChecked?'done':''}" onclick="toggleTask('${id}')">
+              <div class="task-checkbox"></div><span class="task-text">系统设计加练：${d.tier6.design}</span>
+            </li></ul>`;
+        }
+        if (d.tier6.mock60) {
+          html += `<div class="callout" style="background:#faf5ff;border-color:#e9d5ff;color:#6b21a8">
+            <span class="callout-icon">🎬</span><span><strong>周末全真模拟（60 分钟）：</strong>${d.tier6.mock60}</span>
+          </div>`;
+        }
+        html += `</div>`;
+      }
+    }
+
+    // Custom knowledge points
+    const dayKp = state.customKp['d' + d.day] || [];
+    html += `<div class="day-section">
+      <div class="day-section-label">⭐ 自定义知识点</div>
+      <ul class="custom-kp-list" id="kpList-${d.day}">`;
+    dayKp.forEach((kp, i) => {
+      html += `<li class="custom-kp-item">
+        <div class="task-checkbox"></div>
+        <span class="kp-text">${kp}</span>
+        <span class="kp-delete" onclick="deleteCustomKp(${d.day}, ${i})">✕</span>
+      </li>`;
+    });
+    html += `</ul>
+      <div class="custom-kp-add-row" id="kpAddRow-${d.day}">
+        <input placeholder="输入知识点，回车确认..." onkeydown="if(event.key==='Enter')confirmAddKp(${d.day}, this)">
+        <button class="custom-kp-confirm" onclick="confirmAddKp(${d.day}, this.previousElementSibling)">确认</button>
+      </div>
+      <button class="custom-kp-add-btn" onclick="toggleAddKp(${d.day})">+ 添加知识点</button>
+    </div>`;
+
+    // Daily notes
+    const noteText = state.notes['d' + d.day] || '';
+    html += `<div class="day-section">
+      <div class="day-section-label">📝 学习笔记</div>
+      <textarea class="note-area" placeholder="随手记笔记、灵感、疑问... 自动保存" 
+        oninput="saveNote(${d.day}, this.value)">${noteText}</textarea>
+      <div class="note-hint">自动保存到本地，刷新不丢</div>
+    </div>`;
+  }
+
+  html += `</div></div>`;
+  return html;
+}
+
+// --- Algorithm ---
+function renderAlgo() {
+  let html = `<div class="section">
+    <div class="section-title">算法刷题清单</div>
+    <div class="section-desc">当前档位算法题，点击勾选完成 · LeetCode 题号可点击跳转</div>
+    <div class="tab-bar">`;
+  
+  ['3h', '5h', '6h'].forEach(t => {
+    html += `<button class="tab-btn ${currentTier===t?'active':''}" onclick="switchTierForAlgo('${t}')">${t==='3h'?'3h 基础':t==='5h'?'5h 进阶':'6h 深度'}（${t==='3h'?'~12':t==='5h'?'~25':'~35'} 题）</button>`;
+  });
+  html += `</div>`;
+
+  // Base algorithms (always show 3h)
+  const baseAlgos = PLAN.algorithms["3h"];
+  const extraAlgos = currentTier !== "3h" ? PLAN.algorithms[currentTier] : [];
+
+  html += `<div class="algo-grid" style="margin-bottom:20px">`;
+  baseAlgos.forEach(w => {
+    html += `<div class="algo-card">
+      <div class="algo-card-title">第 ${w.week} 周 <span class="week-tag">基础</span></div>`;
+    w.items.forEach(item => {
+      const id = algoId(w.week, item.title);
+      const isChecked = state.algo[id];
+      const lcLink = item.lc ? `<a class="algo-link" href="https://leetcode.cn/problems/${item.lc.split('/')[0]}/" target="_blank">LC ${item.lc}</a>` : '';
+      html += `<div class="algo-item ${isChecked?'done':''}" onclick="toggleAlgo('${id}')">
+        <div class="algo-checkbox"></div>
+        <span class="algo-text">${item.title} <span style="font-size:11px;color:var(--text-tertiary)">${item.days}</span></span>
+        ${lcLink}
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div>`;
+
+  if (extraAlgos.length) {
+    html += `<div class="section-title" style="font-size:16px;margin-bottom:12px">${currentTier==='5h'?'5h':'6h'} 版新增题目</div>
+    <div class="algo-grid">`;
+    extraAlgos.forEach(w => {
+      if (!w.items.length) return;
+      html += `<div class="algo-card">
+        <div class="algo-card-title">第 ${w.week} 周 <span class="week-tag">新增</span></div>`;
+      w.items.forEach(item => {
+        const id = algoId(w.week + 100, item.title);
+        const isChecked = state.algo[id];
+        const lcLink = item.lc ? `<a class="algo-link" href="https://leetcode.cn/problems/${item.lc.split('/')[0]}/" target="_blank">LC ${item.lc}</a>` : '';
+        html += `<div class="algo-item ${isChecked?'done':''}" onclick="toggleAlgo('${id}')">
+          <div class="algo-checkbox"></div>
+          <span class="algo-text">${item.title} <span style="font-size:11px;color:var(--text-tertiary)">${item.days}</span></span>
+          ${lcLink}
+        </div>`;
+      });
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+// --- Flashcards ---
+function renderCards() {
+  let html = `<div class="section">
+    <div class="section-title">关键词卡片</div>
+    <div class="section-desc">点击卡片翻转，用关键词锚点即兴展开，模拟面试自测</div>
+    <div class="flashcard-grid">`;
+  PLAN.flashcards.forEach((c, i) => {
+    html += `<div class="flashcard" onclick="this.classList.toggle('flipped')">
+      <div class="flashcard-inner">
+        <div class="flashcard-front">
+          <div class="flashcard-label">关键词卡片</div>
+          <div class="flashcard-title">${c.title}</div>
+          <div class="flashcard-hint">点击翻转查看关键词 →</div>
+        </div>
+        <div class="flashcard-back">
+          <div class="flashcard-label">关键词锚点</div>
+          <div class="flashcard-content">${c.keywords}</div>
+        </div>
+      </div>
+    </div>`;
+  });
+  html += `</div></div>`;
+  return html;
+}
+
+// --- Cases ---
+function renderCases() {
+  const cases = [
+    { title: "线程池 OOM", keywords: "数据采集任务量大 | 无界队列堆积 | jmap + MAT 分析堆 dump | 堆内存撑爆 | 改有界队列 + CallerRunsPolicy + 分批提交 + 背压 | 压测后内存稳定" },
+    { title: "慢 SQL 优化", keywords: "接口响应慢 | 慢查询日志定位 | Explain 看 type/rows/Extra | 全表扫描 + 未走索引 | 加联合索引 + 覆盖索引优化 | 查询时间显著下降" },
+    { title: "Redis 缓存一致性", keywords: "高频读取商品信息 | 先更新 DB 再删缓存 | 并发场景短暂不一致 | 延迟双删 / Canal 订阅 binlog / MQ 异步同步 | 最终一致" },
+    { title: "MQ 消息积压", keywords: "消费速度跟不上生产 | 消费者处理耗时 | 临时扩容消费者 + 线程池并行消费 | 修复后逐步消化积压 | 增加监控告警阈值" },
+    { title: "Nacos 长轮询 + OpenFeign", keywords: "客户端长轮询请求 | 服务端 hold 29.5s | 配置变更立即返回 | 客户端拉取新配置 | OpenFeign 动态代理 → 负载均衡 → 选择实例 → HTTP 调用" }
+  ];
+  let html = `<div class="section">
+    <div class="section-title">项目案例关键词卡片</div>
+    <div class="section-desc">用关键词锚点即兴展开，不要逐字背诵。每个案例能讲 2 分钟。</div>
+    <div class="case-grid">`;
+  cases.forEach(c => {
+    html += `<div class="case-card">
+      <div class="case-card-title">${c.title}</div>
+      <div class="case-card-keywords">`;
+    c.keywords.split('|').forEach(kw => {
+      html += `<span class="kw">${kw.trim()}</span>`;
+    });
+    html += `</div></div>`;
+  });
+  html += `</div></div>`;
+  return html;
+}
+
+// --- System Design ---
+function renderDesign() {
+  let html = `<div class="section">
+    <div class="section-title">系统设计案例</div>
+    <div class="section-desc">四维分析法：数据量预估 → 存储选型 → 一致性方案 → 容错兜底</div>
+    <table class="design-table">
+      <thead><tr><th>案例</th><th>适用档位</th><th>核心考察点</th></tr></thead>
+      <tbody>`;
+  PLAN.systemDesign.forEach(s => {
+    const tag = s.tier === 'all' ? '<span class="design-tag all">全部</span>' : '<span class="design-tag deep">6h 版</span>';
+    html += `<tr><td><strong>${s.name}</strong></td><td>${tag}</td><td>${s.points}</td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+
+  // Design details
+  html += `<div class="section">
+    <div class="section-title">设计案例详解</div>
+    <div class="case-grid">
+      <div class="case-card" style="border-left-color:var(--accent)">
+        <div class="case-card-title">短链系统</div>
+        <div class="case-card-keywords">
+          <span class="kw">日均 1 亿次生成</span>
+          <span class="kw">每条短链 6 字符</span>
+          <span class="kw">MySQL 存映射关系</span>
+          <span class="kw">Redis 缓存热点短链</span>
+          <span class="kw">发号器生成唯一 ID</span>
+          <span class="kw">转 62 进制</span>
+          <span class="kw">短链过期 + 防重 + 限流</span>
+        </div>
+      </div>
+      <div class="case-card" style="border-left-color:var(--green)">
+        <div class="case-card-title">秒杀系统</div>
+        <div class="case-card-keywords">
+          <span class="kw">10 万人抢 1000 件</span>
+          <span class="kw">Redis 预扣库存</span>
+          <span class="kw">MySQL 最终扣减</span>
+          <span class="kw">Redis + MQ 异步落库</span>
+          <span class="kw">限流 + 熔断</span>
+          <span class="kw">Lua 原子扣减防超卖</span>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  return html;
+}
+
+// --- Errors ---
+function renderErrors() {
+  let html = `<div class="section">
+    <div class="section-title">易错清单</div>
+    <div class="section-desc">面试前必看的高频易错点，可自定义增删</div>
+    <div class="error-list-container">
+      <div class="error-list-header">
+        <div class="error-list-title">⚠️ 共 ${state.errors.length} 条</div>
+        <button class="error-add-btn" onclick="toggleAddError()">+ 添加</button>
+      </div>
+      <div class="error-input-row" id="errorInputRow">
+        <input class="error-input" id="errorInput" placeholder="输入易错点..." onkeydown="if(event.key==='Enter')confirmAddError()">
+        <button class="error-confirm" onclick="confirmAddError()">确认</button>
+      </div>
+      <div class="error-list-body">`;
+  state.errors.forEach((e, i) => {
+    html += `<div class="error-item">
+      <span class="error-bullet">•</span>
+      <span class="error-text">${e}</span>
+      <span class="error-delete" onclick="deleteError(${i})">✕</span>
+    </div>`;
+  });
+  html += `</div></div></div>`;
+  return html;
+}
+
+// --- Backlog (待补清单) ---
+function renderBacklog() {
+  let html = `<div class="section">
+    <div class="section-title">待补清单</div>
+    <div class="section-desc">弹性机制：遇到计划外知识点时记录于此，指定类型和计划补的日期</div>
+    <div class="backlog-container">
+      <div class="backlog-header">
+        <div class="backlog-title">📋 共 ${state.backlog.length} 条</div>
+        <button class="backlog-add-btn" onclick="toggleAddBacklog()">+ 添加</button>
+      </div>
+      <div class="backlog-input-row" id="backlogInputRow">
+        <input class="backlog-input-main" id="backlogInput" placeholder="输入知识点名称..." onkeydown="if(event.key==='Enter')confirmAddBacklog()">
+        <select class="backlog-input-cat" id="backlogCat">
+          <option value="red">🔴 阻塞型</option>
+          <option value="yellow" selected>🟡 关联型</option>
+          <option value="green">🟢 加分型</option>
+        </select>
+        <select class="backlog-input-day" id="backlogDay">
+          <option value="">补的日子</option>`;
+  for (let i = 1; i <= 30; i++) {
+    html += `<option value="${i}">Day ${i}</option>`;
+  }
+  html += `</select>
+        <button class="backlog-confirm" onclick="confirmAddBacklog()">确认</button>
+      </div>
+      <div class="backlog-body" id="backlogBody">`;
+  
+  if (state.backlog.length === 0) {
+    html += `<div class="backlog-empty">暂无待补知识点<br><span style="font-size:12px">学习过程中遇到计划外的知识点，随时记录到这里</span></div>`;
+  } else {
+    const catLabels = { red: '🔴 阻塞型', yellow: '🟡 关联型', green: '🟢 加分型' };
+    state.backlog.forEach((b, i) => {
+      html += `<div class="backlog-item ${b.done?'done':''}">
+        <span class="backlog-cat ${b.cat}">${catLabels[b.cat]||'🟡 关联型'}</span>
+        <div style="flex:1">
+          <div class="backlog-text">${b.text}</div>
+          ${b.day ? `<div class="backlog-day-tag">计划补：Day ${b.day}</div>` : '<div class="backlog-day-tag">未指定</div>'}
+        </div>
+        <div class="backlog-actions">
+          <span class="backlog-check" onclick="toggleBacklogDone(${i})" title="标记完成">${b.done?'✓':'○'}</span>
+          <span class="backlog-delete" onclick="deleteBacklog(${i})" title="删除">✕</span>
+        </div>
+      </div>`;
+    });
+  }
+  
+  html += `</div></div></div>`;
+  return html;
+}
+
+// ===================== INTERACTIONS =====================
+function toggleTask(id) {
+  state.tasks[id] = !state.tasks[id];
+  saveState();
+  renderMain();
+  renderSidebar();
+}
+function toggleMock(id) {
+  state.mock[id] = !state.mock[id];
+  saveState();
+  renderMain();
+}
+function toggleAlgo(id) {
+  state.algo[id] = !state.algo[id];
+  saveState();
+  renderMain();
+}
+function switchTier(tier) {
+  currentTier = tier;
+  renderMain();
+  renderSidebar();
+}
+function switchTierForAlgo(tier) {
+  currentTier = tier;
+  // Update header buttons
+  document.querySelectorAll('.tier-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tier === tier);
+  });
+  renderMain();
+}
+function toggleAddError() {
+  const row = document.getElementById("errorInputRow");
+  row.classList.toggle("visible");
+  if (row.classList.contains("visible")) {
+    document.getElementById("errorInput").focus();
+  }
+}
+function confirmAddError() {
+  const input = document.getElementById("errorInput");
+  const val = input.value.trim();
+  if (val) {
+    state.errors.push(val);
+    saveState();
+    renderMain();
+  }
+}
+function deleteError(idx) {
+  state.errors.splice(idx, 1);
+  saveState();
+  renderMain();
+}
+
+// --- Custom Knowledge Points ---
+function toggleAddKp(day) {
+  const row = document.getElementById('kpAddRow-' + day);
+  row.classList.toggle('visible');
+  if (row.classList.contains('visible')) {
+    row.querySelector('input').focus();
+  }
+}
+function confirmAddKp(day, input) {
+  const val = input.value.trim();
+  if (val) {
+    const key = 'd' + day;
+    if (!state.customKp[key]) state.customKp[key] = [];
+    state.customKp[key].push(val);
+    saveState();
+    renderMain();
+  }
+}
+function deleteCustomKp(day, idx) {
+  const key = 'd' + day;
+  if (state.customKp[key]) {
+    state.customKp[key].splice(idx, 1);
+    if (state.customKp[key].length === 0) delete state.customKp[key];
+    saveState();
+    renderMain();
+  }
+}
+
+// --- Daily Notes ---
+function saveNote(day, val) {
+  const key = 'd' + day;
+  if (val.trim()) {
+    state.notes[key] = val;
+  } else {
+    delete state.notes[key];
+  }
+  saveState();
+}
+
+// --- Backlog (待补清单) ---
+function toggleAddBacklog() {
+  const row = document.getElementById("backlogInputRow");
+  row.classList.toggle("visible");
+  if (row.classList.contains("visible")) {
+    document.getElementById("backlogInput").focus();
+  }
+}
+function confirmAddBacklog() {
+  const input = document.getElementById("backlogInput");
+  const cat = document.getElementById("backlogCat").value;
+  const day = document.getElementById("backlogDay").value;
+  const val = input.value.trim();
+  if (val) {
+    state.backlog.push({ text: val, cat: cat, day: day ? parseInt(day) : null, done: false });
+    saveState();
+    renderMain();
+  }
+}
+function toggleBacklogDone(idx) {
+  state.backlog[idx].done = !state.backlog[idx].done;
+  saveState();
+  renderMain();
+}
+function deleteBacklog(idx) {
+  state.backlog.splice(idx, 1);
+  saveState();
+  renderMain();
+}
+
+// Tier switcher buttons
+document.querySelectorAll('.tier-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTier(btn.dataset.tier));
+});
+
+// Initial render
+renderSidebar();
+renderMain();
+</script>
+</body>
+</html>

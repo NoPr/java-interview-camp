@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<title>Editorial Hybrid · 融合方案</title>
+<style>
+  /* ============================================================ */
+  /* Editorial Hybrid —— 四方案优点融合                            */
+  /* ============================================================ */
+  /* 整合点：
+     B 衬线标题权威感 + A 色条分层清晰 + D 卡片化现代感
+     + C 等宽字体极客感 + B staggered 动画
+     色彩：单色系深绿明度层次（3 绿系）+ 琥珀突出面试题库 */
+
+  :root {
+    /* 字体三体协作 */
+    --h-serif: 'Noto Serif SC', 'Source Han Serif SC', serif;
+    --h-sans: 'Noto Sans SC', system-ui, sans-serif;
+    --h-mono: 'JetBrains Mono', 'Cascadia Code', monospace;
+
+    /* 背景层 */
+    --h-canvas: #faf9f6;        /* 温暖米白画布 */
+    --h-paper: #ffffff;         /* 卡片白 */
+    --h-mist: #f4f2ec;          /* 次级背景 */
+    --h-mist-deep: #ece9df;     /* 更深次级 */
+
+    /* 文字层 */
+    --h-ink: #1c1c1a;           /* 墨黑 */
+    --h-ink-soft: #4a4a45;      /* 次级 */
+    --h-ink-muted: #8a8a82;     /* 弱化 */
+    --h-ink-faint: #b8b8b0;     /* 最弱 */
+
+    /* 主色族：深绿明度层次（3 个绿系） */
+    --h-brand: #15803d;         /* 品牌主色：深绿 */
+    --h-brand-deep: #14532d;    /* 墨绿：重点知识 */
+    --h-brand-mid: #166534;     /* 深翠：必会题 */
+    --h-brand-olive: #65a30d;   /* 橄榄：模拟题（黄绿过渡） */
+
+    /* 强调色：琥珀（面试题库核心场景） */
+    --h-amber: #d97706;
+    --h-amber-deep: #92400e;
+
+    /* 优先级色 */
+    --h-red: #dc2626;
+    --h-yellow: #d97706;
+    --h-green: #16a34a;
+    --h-gray: #6b7280;
+
+    /* 边框 */
+    --h-border: #e6e3da;
+    --h-border-soft: #f0ede4;
+
+    /* 阴影 */
+    --h-shadow-sm: 0 1px 2px rgba(28,28,26,0.04);
+    --h-shadow-md: 0 2px 8px rgba(28,28,26,0.06), 0 1px 2px rgba(28,28,26,0.04);
+    --h-shadow-lg: 0 8px 24px rgba(28,28,26,0.08), 0 2px 8px rgba(28,28,26,0.04);
+
+    /* 圆角 */
+    --h-r-sm: 4px;
+    --h-r-md: 8px;
+    --h-r-lg: 12px;
+    --h-r-pill: 20px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--h-sans);
+    background: #18181b;
+    color: #e4e4e7;
+    padding: 24px;
+    min-height: 100vh;
+  }
+
+  /* 演示页外框 */
+  .page-wrap {
+    max-width: 920px;
+    margin: 0 auto;
+  }
+  .page-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .page-header h1 {
+    font-family: var(--h-serif);
+    font-size: 26px;
+    font-weight: 600;
+    color: #fafafa;
+    margin-bottom: 6px;
+    letter-spacing: -0.01em;
+  }
+  .page-header p {
+    font-size: 12px;
+    color: #a1a1aa;
+  }
+  .page-header .tags {
+    margin-top: 10px;
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .page-header .tag {
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-family: var(--h-mono);
+    font-weight: 500;
+  }
+
+  /* 融合方案容器 */
+  .hybrid-frame {
+    background: #27272a;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .hybrid-label {
+    padding: 12px 18px;
+    background: #18181b;
+    border-bottom: 1px solid #3f3f46;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .hybrid-label-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fafafa;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hybrid-label-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-family: var(--h-mono);
+    font-weight: 500;
+    background: rgba(34,197,94,0.15);
+    color: #22c55e;
+  }
+  .hybrid-label-desc {
+    font-size: 11px;
+    color: #71717a;
+  }
+
+  /* ============================================================ */
+  /* 融合方案主体                                                  */
+  /* ============================================================ */
+  .hybrid {
+    background: var(--h-canvas);
+    padding: 32px 36px 56px;
+    font-family: var(--h-sans);
+    font-size: 13px;
+    color: var(--h-ink-soft);
+    line-height: 1.6;
+  }
+
+  /* ===== Hero 标题区（B 的权威 + A 的元信息分层） ===== */
+  .h-hero {
+    margin-bottom: 36px;
+    padding-bottom: 22px;
+    border-bottom: 2px solid var(--h-ink);
+    animation: h-fade-up 500ms cubic-bezier(0.2, 0.6, 0.2, 1);
+  }
+  .h-eyebrow {
+    font-family: var(--h-mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--h-brand);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .h-eyebrow::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--h-brand);
+  }
+  .h-title {
+    font-family: var(--h-serif);
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--h-ink);
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .h-title-icon {
+    font-size: 34px;
+    filter: drop-shadow(0 2px 4px rgba(28,28,26,0.1));
+  }
+
+  /* 元信息栏：4 列统计 + 进度条（B 的结构 + D 的胶囊） */
+  .h-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .h-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .h-meta-label {
+    font-size: 9px;
+    color: var(--h-ink-faint);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .h-meta-value {
+    font-family: var(--h-mono);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--h-ink);
+  }
+  .h-meta-value .unit {
+    font-size: 11px;
+    color: var(--h-ink-muted);
+    font-weight: 400;
+    margin-left: 2px;
+  }
+  .h-meta-div {
+    width: 1px;
+    height: 30px;
+    background: var(--h-border);
+  }
+  .h-meta-progress {
+    flex: 1;
+    min-width: 160px;
+  }
+  .h-progress-track {
+    position: relative;
+    height: 24px;
+    background: var(--h-mist);
+    border-radius: var(--h-r-pill);
+    overflow: hidden;
+    margin-top: 3px;
+  }
+  .h-progress-fill {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    background: linear-gradient(90deg, var(--h-brand-deep) 0%, var(--h-brand) 50%, #22c55e 100%);
+    border-radius: var(--h-r-pill);
+    transition: width 800ms cubic-bezier(0.2, 0.6, 0.2, 1);
+  }
+  .h-progress-text {
+    position: relative;
+    z-index: 1;
+    font-family: var(--h-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 24px;
+    padding-left: 12px;
+    mix-blend-mode: difference;
+  }
+
+  /* ===== 章节区（B 的编号 + A 的色条 + D 的卡片） ===== */
+  .h-section {
+    margin-bottom: 28px;
+    animation: h-fade-up 500ms cubic-bezier(0.2, 0.6, 0.2, 1) both;
+  }
+  .h-section:nth-child(2) { animation-delay: 80ms; }
+  .h-section:nth-child(3) { animation-delay: 140ms; }
+  .h-section:nth-child(4) { animation-delay: 200ms; }
+  .h-section:nth-child(5) { animation-delay: 260ms; }
+
+  @keyframes h-fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 章节头：编号 + 衬线标题 + 色条 + 计数 */
+  .h-section-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--h-border-soft);
+  }
+  .h-section-num {
+    font-family: var(--h-mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 7px;
+    border-radius: var(--h-r-sm);
+    flex-shrink: 0;
+  }
+  .h-section-bar {
+    width: 3px;
+    height: 18px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .h-section-head h3 {
+    font-family: var(--h-serif);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--h-ink);
+    flex: 1;
+    letter-spacing: -0.005em;
+  }
+  .h-section-count {
+    font-family: var(--h-mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--h-ink-muted);
+    flex-shrink: 0;
+  }
+
+  /* 章节配色：3 绿系明度 + 1 琥珀突出 */
+  .h-section.knowledge .h-section-num { background: #ecfdf5; color: var(--h-brand-deep); }
+  .h-section.knowledge .h-section-bar { background: var(--h-brand-deep); }
+  .h-section.knowledge .h-section-count { color: var(--h-brand-deep); }
+
+  .h-section.mustknow .h-section-num { background: #dcfce7; color: var(--h-brand-mid); }
+  .h-section.mustknow .h-section-bar { background: var(--h-brand-mid); }
+  .h-section.mustknow .h-section-count { color: var(--h-brand-mid); }
+
+  .h-section.mock .h-section-num { background: #ecfccb; color: var(--h-brand-olive); }
+  .h-section.mock .h-section-bar { background: var(--h-brand-olive); }
+  .h-section.mock .h-section-count { color: var(--h-brand-olive); }
+
+  /* 面试题库：琥珀色突出核心场景 + 独立卡片容器 */
+  .h-section.featured {
+    background: var(--h-paper);
+    border: 1px solid var(--h-border);
+    border-radius: var(--h-r-lg);
+    padding: 22px 26px;
+    box-shadow: var(--h-shadow-md);
+  }
+  .h-section.featured .h-section-head {
+    border-bottom-color: var(--h-border);
+    margin-bottom: 16px;
+  }
+  .h-section.featured .h-section-num { background: #fffbeb; color: var(--h-amber-deep); }
+  .h-section.featured .h-section-bar { background: var(--h-amber); }
+  .h-section.featured .h-section-count { color: var(--h-amber-deep); }
+
+  /* ===== 列表项：白卡片 + 大圆角（D）+ hover 上浮（D） ===== */
+  .h-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .h-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    padding: 10px 14px;
+    background: var(--h-paper);
+    border: 1px solid var(--h-border-soft);
+    border-radius: var(--h-r-md);
+    transition: all 200ms cubic-bezier(0.2, 0.6, 0.2, 1);
+    animation: h-fade-up 400ms cubic-bezier(0.2, 0.6, 0.2, 1) both;
+  }
+  .h-item:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--h-shadow-md);
+    border-color: var(--h-border);
+  }
+  .h-item.done .h-text {
+    color: var(--h-ink-faint);
+    text-decoration: line-through;
+    text-decoration-color: var(--h-ink-faint);
+  }
+
+  /* 勾选框：跟随章节色系 */
+  .h-cb {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid var(--h-border);
+    border-radius: var(--h-r-sm);
+    flex-shrink: 0;
+    margin-top: 2px;
+    cursor: pointer;
+    transition: all 180ms ease;
+    position: relative;
+    background: var(--h-paper);
+  }
+  .h-cb:hover { border-color: var(--h-brand); }
+  .h-cb.checked { border-color: transparent; }
+  .h-cb.checked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 5px;
+    width: 4px;
+    height: 7px;
+    border: solid #fff;
+    border-width: 0 1.5px 1.5px 0;
+    transform: rotate(45deg);
+  }
+  .h-section.knowledge .h-cb.checked { background: var(--h-brand-deep); }
+  .h-section.mustknow .h-cb.checked { background: var(--h-brand-mid); }
+  .h-section.mock .h-cb.checked { background: var(--h-brand-olive); }
+  .h-section.featured .h-cb.checked { background: var(--h-amber); }
+
+  /* 文本：正文黑体 + 技术术语等宽 */
+  .h-text {
+    flex: 1;
+    font-size: 13px;
+    color: var(--h-ink-soft);
+    line-height: 1.65;
+  }
+  .h-text code {
+    font-family: var(--h-mono);
+    font-size: 12px;
+    background: var(--h-mist);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--h-brand-deep);
+  }
+
+  /* Day 跳转：等宽胶囊（C+D） */
+  .h-day {
+    font-family: var(--h-mono);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 3px 10px;
+    background: var(--h-mist);
+    color: var(--h-ink-muted);
+    border-radius: var(--h-r-pill);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 160ms ease;
+    border: 1px solid transparent;
+  }
+  .h-day:hover {
+    background: var(--h-paper);
+    color: var(--h-brand);
+    border-color: var(--h-brand);
+  }
+
+  /* 优先级标签：色条 + emoji（A） */
+  .h-prio {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: var(--h-r-pill);
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+  }
+  .h-prio.red { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+  .h-prio.yellow { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+  .h-prio.green { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .h-prio.gray { background: #f9fafb; color: #475569; border: 1px solid #e5e7eb; }
+
+  /* 双来源徽章 */
+  .h-source {
+    font-family: var(--h-mono);
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 7px;
+    background: linear-gradient(135deg, var(--h-brand) 0%, var(--h-brand-olive) 100%);
+    color: #fff;
+    border-radius: var(--h-r-pill);
+    flex-shrink: 0;
+    letter-spacing: 0.02em;
+  }
+
+  /* 优先级筛选栏 */
+  .h-filter {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .h-filter-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 4px 11px;
+    border-radius: var(--h-r-pill);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .h-filter-badge.red { background: #fee2e2; color: #991b1b; }
+  .h-filter-badge.yellow { background: #fef3c7; color: #92400e; }
+  .h-filter-badge.green { background: #d1fae5; color: #065f46; }
+  .h-filter-badge.gray { background: #f1f5f9; color: #475569; }
+
+  /* 自定义内容：暖色虚线边框 */
+  .h-item.custom {
+    background: #fefcf3;
+    border: 1px dashed #e8d878;
+  }
+  .h-item.custom:hover {
+    background: #fef9e0;
+    border-color: #d4b92e;
+  }
+
+  /* 删除按钮 */
+  .h-del {
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: transparent;
+    color: var(--h-ink-faint);
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: var(--h-r-sm);
+    transition: all 160ms ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-family: var(--h-sans);
+  }
+  .h-del:hover {
+    color: var(--h-red);
+    background: #fee2e2;
+  }
+
+  /* 添加按钮 */
+  .h-add {
+    margin-top: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--h-ink-muted);
+    background: transparent;
+    border: 1px dashed var(--h-border);
+    border-radius: var(--h-r-md);
+    cursor: pointer;
+    transition: all 180ms ease;
+    font-family: var(--h-sans);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .h-add:hover {
+    color: var(--h-brand);
+    border-color: var(--h-brand);
+    background: #f0fdf4;
+  }
+
+  /* 滚动条 */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+  <div class="page-header">
+    <h1>Editorial Hybrid · 融合方案</h1>
+    <p>整合四方案优点：衬线权威 + 色条分层 + 卡片现代 + 等宽极客</p>
+    <div class="tags">
+      <span class="tag" style="background:rgba(34,197,94,0.15);color:#22c55e;">B 衬线标题</span>
+      <span class="tag" style="background:rgba(59,130,246,0.15);color:#60a5fa;">A 色条分层</span>
+      <span class="tag" style="background:rgba(168,197,216,0.15);color:#a8c5d8;">D 卡片化</span>
+      <span class="tag" style="background:rgba(245,158,11,0.15);color:#f59e0b;">C 等宽字体</span>
+      <span class="tag" style="background:rgba(168,197,216,0.15);color:#a8c5d8;">单色系明度</span>
+    </div>
+  </div>
+
+  <div class="hybrid-frame">
+    <div class="hybrid-label">
+      <div class="hybrid-label-name">
+        Editorial Hybrid
+        <span class="hybrid-label-tag">RECOMMENDED</span>
+      </div>
+      <span class="hybrid-label-desc">单色系深绿明度层次 + 琥珀突出面试题库</span>
+    </div>
+
+    <div class="hybrid">
+
+      <!-- ===== Hero 标题区 ===== -->
+      <header class="h-hero">
+        <div class="h-eyebrow">技术栈 · TECH STACK</div>
+        <h2 class="h-title">
+          <span class="h-title-icon">⚡</span>
+          <span>并发</span>
+        </h2>
+        <div class="h-meta">
+          <div class="h-meta-item">
+            <span class="h-meta-label">覆盖范围</span>
+            <span class="h-meta-value">Day 4-6</span>
+          </div>
+          <div class="h-meta-div"></div>
+          <div class="h-meta-item">
+            <span class="h-meta-label">知识点数</span>
+            <span class="h-meta-value">15<span class="unit">项</span></span>
+          </div>
+          <div class="h-meta-div"></div>
+          <div class="h-meta-item">
+            <span class="h-meta-label">已掌握</span>
+            <span class="h-meta-value">8 / 15</span>
+          </div>
+          <div class="h-meta-div"></div>
+          <div class="h-meta-item h-meta-progress">
+            <span class="h-meta-label">完成率</span>
+            <div class="h-progress-track">
+              <div class="h-progress-fill" style="width:53%"></div>
+              <span class="h-progress-text">53%</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===== 01 重点知识（墨绿） ===== -->
+      <section class="h-section knowledge">
+        <div class="h-section-head">
+          <span class="h-section-num">01</span>
+          <span class="h-section-bar"></span>
+          <h3>重点知识</h3>
+          <span class="h-section-count">4 项</span>
+        </div>
+        <div class="h-list">
+          <div class="h-item done">
+            <span class="h-cb checked"></span>
+            <span class="h-text"><code>volatile</code> 可见性与有序性</span>
+            <span class="h-day">Day 4</span>
+            <button class="h-del">×</button>
+          </div>
+          <div class="h-item">
+            <span class="h-cb"></span>
+            <span class="h-text"><code>synchronized</code> 锁升级过程</span>
+            <span class="h-day">Day 5</span>
+            <button class="h-del">×</button>
+          </div>
+          <div class="h-item">
+            <span class="h-cb"></span>
+            <span class="h-text">线程池 7 参数与拒绝策略</span>
+            <span class="h-day">Day 6</span>
+            <button class="h-del">×</button>
+          </div>
+          <div class="h-item done">
+            <span class="h-cb checked"></span>
+            <span class="h-text">虚拟线程 vs 平台线程</span>
+            <span class="h-day">Day 6</span>
+            <button class="h-del">×</button>
+          </div>
+        </div>
+        <button class="h-add">+ 添加重点知识</button>
+      </section>
+
+      <!-- ===== 02 必会题（深翠） ===== -->
+      <section class="h-section mustknow">
+        <div class="h-section-head">
+          <span class="h-section-num">02</span>
+          <span class="h-section-bar"></span>
+          <h3>必会题</h3>
+          <span class="h-section-count">3 项</span>
+        </div>
+        <div class="h-list">
+          <div class="h-item">
+            <span class="h-cb"></span>
+            <span class="h-text"><code>volatile</code> 不保证原子性？</span>
+            <span class="h-day">Day 4</span>
+            <button class="h-del">×</button>
+          </div>
+          <div class="h-item done">
+            <span class="h-cb checked"></span>
+            <span class="h-text"><code>synchronized</code> 和 <code>Lock</code> 区别？</span>
+            <span class="h-day">Day 5</span>
+            <button class="h-del">×</button>
+          </div>
+          <div class="h-item">
+            <span class="h-cb"></span>
+            <span class="h-text">线程池核心参数？</span>
+            <span class="h-day">Day 6</span>
+            <button class="h-del">×</button>
+          </div>
+        </div>
+        <button class="h-add">+ 添加必会题</button>
+      </section>
+
+      <!-- ===== 03 模拟题（橄榄） ===== -->
+      <section class="h-section mock">
+        <div class="h-section-head">
+          <span class="h-section-num">03</span>
+          <span class="h-section-bar"></span>
+          <h3>模拟题</h3>
+          <span class="h-section-count">3 题</span>
+        </div>
+        <div class="h-list">
+          <div class="h-item">
+            <span class="h-cb"></span>
+            <span class="h-text"><code>volatile</code> 和 <code>synchronized</code> 区别？</span>
+            <span class="h-day">Day 4</span>
+            <button class="h-del">×</button>
+          </div>
+          <div class="h-item">
+            <span class="h-cb"></span>
+            <span class="h-text">线程池 OOM 排查思路？</span>
+            <span class="h-day">Day 6</span>
+            <button class="h-del">×</button>
+          </div>
+        </div>
+        <button class="h-add">+ 添加模拟题</button>
+      </section>
+
+      <!-- ===== 04 面试题库（琥珀突出 + 独立容器） ===== -->
+      <section class="h-section featured">
+        <div class="h-section-head">
+          <span class="h-section-num">04</span>
+          <span class="h-section-bar"></span>
+          <h3>面试题库</h3>
+          <span class="h-section-count">8 题</span>
+        </div>
+
+        <!-- 优先级筛选 -->
+        <div class="h-filter">
+          <span class="h-filter-badge red">🔴 必考 3</span>
+          <span class="h-filter-badge yellow">🟡 常考 3</span>
+          <span class="h-filter-badge green">🟢 偶尔考 2</span>
+          <span class="h-filter-badge gray">⚪ 加分 0</span>
+        </div>
+
+        <div class="h-list">
+          <div class="h-item">
+            <span class="h-cb"></span>
+            <span class="h-text"><code>synchronized</code> 底层原理（monitor 锁）</span>
+            <span class="h-source">双来源</span>
+            <span class="h-prio red">🔴 必考</span>
+            <button class="h-del">×</button>
+          </div>
+          <div class="h-item">
+            <span class="h-cb"></span>
+            <span class="h-text">AQS 原理与 CLH 队列</span>
+            <span class="h-source">双来源</span>
+            <span class="h-prio red">🔴 必考</span>
+            <button class="h-del">×</button>
+          </div>
+          <div class="h-item">
+            <span class="h-cb"></span>
+            <span class="h-text">线程池工作流程与拒绝策略</span>
+            <span class="h-prio red">🔴 必考</span>
+            <button class="h-del">×</button>
+          </div>
+          <div class="h-item done">
+            <span class="h-cb checked"></span>
+            <span class="h-text"><code>ThreadLocal</code> 内存泄漏问题</span>
+            <span class="h-prio yellow">🟡 常考</span>
+            <button class="h-del">×</button>
+          </div>
+          <div class="h-item">
+            <span class="h-cb"></span>
+            <span class="h-text">CAS 与 ABA 问题</span>
+            <span class="h-prio yellow">🟡 常考</span>
+            <button class="h-del">×</button>
+          </div>
+          <div class="h-item custom">
+            <span class="h-cb"></span>
+            <span class="h-text">虚拟线程的适用场景与陷阱</span>
+            <span class="h-prio yellow">🟡 常考</span>
+            <button class="h-del">×</button>
+          </div>
+        </div>
+        <button class="h-add">+ 添加面试题</button>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

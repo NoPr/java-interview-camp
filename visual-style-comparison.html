@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>视觉风格对比 — Java 面试冲刺 Dashboard</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; background: #f0f0f0; color: #1a1a1a; }
+
+/* Tab bar */
+.tab-bar { display: flex; gap: 0; background: #fff; border-bottom: 2px solid #e5e7eb; position: sticky; top: 0; z-index: 100; padding: 0 24px; align-items: center; }
+.tab-btn { padding: 14px 20px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; background: none; color: #6b7280; border-bottom: 3px solid transparent; transition: all 0.15s; }
+.tab-btn:hover { color: #2563eb; }
+.tab-btn.active { color: #2563eb; border-bottom-color: #2563eb; }
+.tab-desc { flex: 1; text-align: right; font-size: 12px; color: #9ca3af; padding: 14px 0; }
+
+/* Page layout */
+.page { display: flex; min-height: calc(100vh - 50px); }
+.sidebar { width: 220px; padding: 16px; flex-shrink: 0; overflow-y: auto; }
+.main { flex: 1; padding: 24px 32px; max-width: 820px; overflow-y: auto; }
+
+/* Day header */
+.day-header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+.day-badge { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.day-title { font-size: 20px; font-weight: 700; }
+.day-subtitle { font-size: 13px; color: #6b7280; margin-top: 2px; }
+
+/* Timeline */
+.timeline { display: flex; gap: 4px; margin-bottom: 24px; font-size: 11px; }
+.timeline-item { padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 4px; }
+.timeline-arrow { color: #9ca3af; align-self: center; }
+.timeline-time { font-weight: 600; }
+.timeline-done { text-decoration: line-through; opacity: 0.5; }
+
+/* Block common */
+.block { margin-bottom: 16px; }
+.block-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.block-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.block-progress { font-size: 12px; font-weight: 600; }
+.block-body { }
+
+/* Task item */
+.task { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; font-size: 14px; cursor: pointer; }
+.task:hover { opacity: 0.8; }
+.checkbox { width: 18px; height: 18px; border: 1.5px solid #d1d5db; border-radius: 4px; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; }
+.task.done .checkbox { background: #16a34a; border-color: #16a34a; }
+.task.done .checkbox::after { content: '✓'; color: white; font-size: 12px; font-weight: bold; }
+.task.done .task-text { text-decoration: line-through; color: #9ca3af; }
+
+/* Mock question */
+.mock-q { padding: 10px 14px; border-radius: 8px; margin-bottom: 6px; cursor: pointer; font-size: 13px; }
+.mock-q.done .mock-text { text-decoration: line-through; color: #9ca3af; }
+.mock-tips { font-size: 12px; color: #6b7280; margin-top: 4px; padding: 6px 10px; border-radius: 6px; display: none; }
+.mock-tips.show { display: block; }
+
+/* Flashcard */
+.flashcard { border-radius: 10px; padding: 16px; cursor: pointer; min-height: 100px; display: flex; flex-direction: column; justify-content: center; }
+.flashcard-label { font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
+.flashcard-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.flashcard-hint { font-size: 12px; margin-top: 8px; }
+
+/* Algo item */
+.algo-item { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 13px; cursor: pointer; }
+.algo-link { font-size: 11px; padding: 1px 6px; border-radius: 4px; text-decoration: none; }
+
+/* Custom KP add */
+.kp-add { display: flex; gap: 6px; margin-top: 8px; }
+.kp-input { flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid; font-size: 13px; outline: none; }
+.kp-btn { padding: 6px 14px; border-radius: 6px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; }
+.kp-priority { display: flex; gap: 4px; margin-top: 6px; }
+.kp-pri-btn { padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; border: 1px solid; }
+
+/* Note area */
+.note-area { width: 100%; min-height: 60px; padding: 10px 14px; border-radius: 8px; border: 1px solid; font-size: 13px; outline: none; resize: vertical; font-family: inherit; }
+
+/* ===================== STYLE A: 柔和渐变 ===================== */
+.style-a .sidebar { background: #fff; border-right: 1px solid #e5e7eb; }
+.style-a .day-badge { background: #fee2e2; color: #dc2626; }
+.style-a .timeline-item { background: #f3f4f6; color: #6b7280; }
+.style-a .timeline-item.done { background: #dcfce7; color: #16a34a; }
+.style-a .timeline-item.current { background: #dbeafe; color: #2563eb; font-weight: 600; }
+
+.style-a .block-kp { background: #eff6ff; border-radius: 12px; padding: 16px; }
+.style-a .block-kp .block-title { color: #1e40af; }
+.style-a .block-kp .block-progress { color: #2563eb; }
+
+.style-a .block-mk { background: #f3f0ff; border-radius: 12px; padding: 16px; }
+.style-a .block-mk .block-title { color: #6b21a8; }
+.style-a .block-mk .block-progress { color: #7c3aed; }
+
+.style-a .block-card { background: #ecfdf5; border-radius: 12px; padding: 16px; }
+.style-a .block-card .block-title { color: #166534; }
+.style-a .block-card .block-progress { color: #16a34a; }
+.style-a .block-card .flashcard { background: #fff; border: 1px solid #a7f3d0; }
+
+.style-a .block-algo { background: #fff7ed; border-radius: 12px; padding: 16px; }
+.style-a .block-algo .block-title { color: #9a3412; }
+.style-a .block-algo .block-progress { color: #ea580c; }
+.style-a .block-algo .algo-link { background: #fff; border-color: #fed7aa; color: #ea580c; }
+
+.style-a .block-mock { background: #fefce8; border-radius: 12px; padding: 16px; }
+.style-a .block-mock .block-title { color: #854d0e; }
+.style-a .block-mock .block-progress { color: #ca8a04; }
+.style-a .block-mock .mock-q { background: #fff; border: 1px solid #fde68a; }
+.style-a .block-mock .mock-q.done { background: #fef9c3; }
+.style-a .block-mock .mock-tips { background: #fff; border: 1px solid #fde68a; }
+
+.style-a .block-custom { background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px dashed #cbd5e1; }
+.style-a .block-custom .block-title { color: #475569; }
+.style-a .block-custom .kp-input { border-color: #cbd5e1; background: #fff; }
+.style-a .block-custom .kp-btn { background: #475569; color: #fff; }
+.style-a .block-custom .kp-pri-btn { background: #fff; border-color: #cbd5e1; color: #64748b; }
+
+.style-a .block-note { background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #e2e8f0; }
+.style-a .block-note .block-title { color: #475569; }
+.style-a .block-note .note-area { border-color: #cbd5e1; background: #fff; }
+
+/* ===================== STYLE B: 左侧色条 ===================== */
+.style-b .sidebar { background: #fff; border-right: 1px solid #e5e7eb; }
+.style-b .day-badge { background: #fee2e2; color: #dc2626; }
+.style-b .timeline-item { background: #f3f4f6; color: #6b7280; }
+.style-b .timeline-item.done { background: #dcfce7; color: #16a34a; }
+.style-b .timeline-item.current { background: #dbeafe; color: #2563eb; font-weight: 600; }
+
+.style-b .block { background: #fff; border-radius: 8px; border: 1px solid #e5e7eb; border-left: 4px solid; padding: 16px; }
+.style-b .block-kp { border-left-color: #2563eb; }
+.style-b .block-kp .block-title { color: #1a1a1a; }
+.style-b .block-kp .block-progress { color: #2563eb; }
+
+.style-b .block-mk { border-left-color: #7c3aed; }
+.style-b .block-mk .block-progress { color: #7c3aed; }
+
+.style-b .block-card { border-left-color: #16a34a; }
+.style-b .block-card .block-progress { color: #16a34a; }
+.style-b .block-card .flashcard { background: #f9fafb; border: 1px solid #e5e7eb; }
+
+.style-b .block-algo { border-left-color: #ea580c; }
+.style-b .block-algo .block-progress { color: #ea580c; }
+.style-b .block-algo .algo-link { background: #f9fafb; border-color: #e5e7eb; color: #ea580c; }
+
+.style-b .block-mock { border-left-color: #ca8a04; }
+.style-b .block-mock .block-progress { color: #ca8a04; }
+.style-b .block-mock .mock-q { background: #f9fafb; border: 1px solid #e5e7eb; }
+.style-b .block-mock .mock-q.done { background: #f0fdf4; }
+.style-b .block-mock .mock-tips { background: #f9fafb; border: 1px solid #e5e7eb; }
+
+.style-b .block-custom { border-left-color: #64748b; border-style: solid; }
+.style-b .block-custom .block-progress { color: #64748b; }
+.style-b .block-custom .kp-input { border-color: #e5e7eb; background: #f9fafb; }
+.style-b .block-custom .kp-btn { background: #64748b; color: #fff; }
+.style-b .block-custom .kp-pri-btn { background: #fff; border-color: #e5e7eb; color: #6b7280; }
+
+.style-b .block-note { border-left-color: #64748b; }
+.style-b .block-note .block-progress { color: #64748b; }
+.style-b .block-note .note-area { border-color: #e5e7eb; background: #f9fafb; }
+
+/* ===================== STYLE C: 图标+标签色 ===================== */
+.style-c .sidebar { background: #fff; border-right: 1px solid #e5e7eb; }
+.style-c .day-badge { background: #fee2e2; color: #dc2626; }
+.style-c .timeline-item { background: #f3f4f6; color: #6b7280; }
+.style-c .timeline-item.done { background: #dcfce7; color: #16a34a; }
+.style-c .timeline-item.current { background: #dbeafe; color: #2563eb; font-weight: 600; }
+
+.style-c .block { background: #fff; border-radius: 8px; border: 1px solid #f0f0f0; padding: 16px; }
+.style-c .block-title { font-size: 14px; }
+.style-c .block-icon { width: 24px; height: 24px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.style-c .block-kp .block-icon { background: #dbeafe; }
+.style-c .block-kp .block-progress { color: #2563eb; }
+.style-c .block-mk .block-icon { background: #f3f0ff; }
+.style-c .block-mk .block-progress { color: #7c3aed; }
+.style-c .block-card .block-icon { background: #dcfce7; }
+.style-c .block-card .block-progress { color: #16a34a; }
+.style-c .block-card .flashcard { background: #fafafa; border: 1px solid #e5e7eb; }
+.style-c .block-algo .block-icon { background: #fff7ed; }
+.style-c .block-algo .block-progress { color: #ea580c; }
+.style-c .block-algo .algo-link { background: #fafafa; border-color: #e5e7eb; color: #ea580c; }
+.style-c .block-mock .block-icon { background: #fefce8; }
+.style-c .block-mock .block-progress { color: #ca8a04; }
+.style-c .block-mock .mock-q { background: #fafafa; border: 1px solid #e5e7eb; }
+.style-c .block-mock .mock-q.done { background: #f0fdf4; }
+.style-c .block-mock .mock-tips { background: #fafafa; border: 1px solid #e5e7eb; }
+.style-c .block-custom .block-icon { background: #f1f5f9; }
+.style-c .block-custom .block-progress { color: #64748b; }
+.style-c .block-custom .kp-input { border-color: #e5e7eb; background: #fafafa; }
+.style-c .block-custom .kp-btn { background: #64748b; color: #fff; }
+.style-c .block-custom .kp-pri-btn { background: #fff; border-color: #e5e7eb; color: #6b7280; }
+.style-c .block-note .block-icon { background: #f1f5f9; }
+.style-c .block-note .block-progress { color: #64748b; }
+.style-c .block-note .note-area { border-color: #e5e7eb; background: #fafafa; }
+
+/* Sidebar items */
+.sb-section { margin-bottom: 16px; }
+.sb-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; margin-bottom: 6px; }
+.sb-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; font-size: 13px; cursor: pointer; color: #6b7280; }
+.sb-item:hover { background: #f5f5f5; }
+.sb-item.active { background: #eff6ff; color: #2563eb; font-weight: 600; }
+.sb-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sb-dot.done { background: #16a34a; }
+.sb-dot.todo { background: #d1d5db; }
+.sb-dot.review { background: #7c3aed; }
+.sb-week-title { font-size: 12px; font-weight: 600; color: #6b7280; padding: 8px 8px 4px; cursor: pointer; display: flex; justify-content: space-between; }
+.sb-week-toggle { font-size: 10px; color: #9ca3af; }
+
+/* Content visibility */
+.style-content { display: none; }
+.style-content.active { display: flex; }
+
+/* Pros/cons */
+.pros-cons { max-width: 820px; margin: 0 auto; padding: 20px 32px 40px; }
+.pc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pc-card { padding: 14px 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; }
+.pc-pros { background: #f0fdf4; border: 1px solid #bbf7d0; }
+.pc-cons { background: #fef2f2; border: 1px solid #fecaca; }
+.pc-title { font-weight: 700; margin-bottom: 6px; font-size: 14px; }
+.pc-pros .pc-title { color: #166534; }
+.pc-cons .pc-title { color: #991b1b; }
+</style>
+</head>
+<body>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchStyle('a')">A: 柔和渐变</button>
+  <button class="tab-btn" onclick="switchStyle('b')">B: 左侧色条</button>
+  <button class="tab-btn" onclick="switchStyle('c')">C: 图标+标签色</button>
+  <span class="tab-desc">点击 Tab 切换风格 · 滚动查看完整效果</span>
+</div>
+
+<!-- ============ STYLE A ============ -->
+<div class="style-content active style-a" id="style-a">
+  <div class="sidebar">
+    <div class="sb-section">
+      <div class="sb-title">导航</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> 总览</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> 卡片库</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> 易错清单</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> 待补清单</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">冲刺计划</div>
+      <div class="sb-week-title">Week 1: Java 并发 <span class="sb-week-toggle">▼</span></div>
+      <div class="sb-item"><span class="sb-dot done"></span> D1 Java 基础</div>
+      <div class="sb-item active"><span class="sb-dot todo"></span> D2 HashMap</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> D3 ConcurrentHashMap</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> D4 线程基础</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> D5 锁+AQS</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> D6 线程池</div>
+      <div class="sb-item"><span class="sb-dot review"></span> D7 复盘</div>
+      <div class="sb-week-title">Week 2: JVM+MySQL <span class="sb-week-toggle">▶</span></div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="day-header">
+      <div class="day-badge">D2</div>
+      <div>
+        <div class="day-title">HashMap</div>
+        <div class="day-subtitle">底层结构 · put 流程 · 扩容机制 · 线程不安全</div>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-item done"><span class="timeline-time">20min</span> 复习</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item current"><span class="timeline-time">80min</span> 学习</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item"><span class="timeline-time">25min</span> 卡片</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item"><span class="timeline-time">20min</span> 算法</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item"><span class="timeline-time">15min</span> 复述</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item"><span class="timeline-time">20min</span> 模拟</div>
+    </div>
+
+    <div class="block block-kp">
+      <div class="block-header">
+        <div class="block-title">📌 重点知识（80min）</div>
+        <div class="block-progress">2/5 ✓</div>
+      </div>
+      <div class="block-body">
+        <div class="task done"><div class="checkbox"></div><span class="task-text">HashMap 底层结构</span></div>
+        <div class="task done"><div class="checkbox"></div><span class="task-text">put 流程</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">扩容机制</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">链表转红黑树</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">为什么线程不安全</span></div>
+      </div>
+    </div>
+
+    <div class="block block-mk">
+      <div class="block-header">
+        <div class="block-title">❓ 必会题</div>
+        <div class="block-progress">1/4 ✓</div>
+      </div>
+      <div class="block-body">
+        <div class="task done"><div class="checkbox"></div><span class="task-text">HashMap 底层原理？</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">HashMap 什么时候扩容？</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">HashMap 什么时候转红黑树？</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">HashMap 为什么线程不安全？</span></div>
+      </div>
+    </div>
+
+    <div class="block block-card">
+      <div class="block-header">
+        <div class="block-title">🃏 关键词卡片（25min）</div>
+        <div class="block-progress">0/1</div>
+      </div>
+      <div class="block-body">
+        <div class="flashcard">
+          <div class="flashcard-label">正面 · 题目</div>
+          <div class="flashcard-title">HashMap 原理</div>
+          <div class="flashcard-hint">点击翻转查看关键词 →</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="block block-algo">
+      <div class="block-header">
+        <div class="block-title">💻 算法练习（20min）</div>
+        <div class="block-progress">0/1</div>
+      </div>
+      <div class="block-body">
+        <div class="algo-item"><div class="checkbox"></div><span>反转链表</span><a class="algo-link" href="#">LC 206</a></div>
+      </div>
+    </div>
+
+    <div class="block block-mock">
+      <div class="block-header">
+        <div class="block-title">🎤 晚间模拟（20min）</div>
+        <div class="block-progress">1/3 ✓</div>
+      </div>
+      <div class="block-body">
+        <div class="mock-q done"><div class="checkbox" style="display:inline-block;vertical-align:middle;margin-right:6px"></div><span class="mock-text">请详细描述 HashMap 的 put 操作完整流程，包括 hash 计算和冲突处理</span></div>
+        <div class="mock-q"><div class="checkbox" style="display:inline-block;vertical-align:middle;margin-right:6px"></div><span class="mock-text">HashMap 在什么条件下会触发扩容？扩容过程是什么？</span></div>
+        <div class="mock-q"><div class="checkbox" style="display:inline-block;vertical-align:middle;margin-right:6px"></div><span class="mock-text">HashMap 为什么线程不安全？具体会出现什么问题？</span></div>
+      </div>
+    </div>
+
+    <div class="block block-custom">
+      <div class="block-header">
+        <div class="block-title">⭐ 自定义知识点</div>
+        <div class="block-progress">0</div>
+      </div>
+      <div class="block-body">
+        <div class="kp-add">
+          <input class="kp-input" placeholder="输入知识点，回车确认...">
+          <button class="kp-btn">确认</button>
+        </div>
+        <div class="kp-priority">
+          <button class="kp-pri-btn">🔴 阻塞</button>
+          <button class="kp-pri-btn">🟡 关联</button>
+          <button class="kp-pri-btn">🟢 加分</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="block block-note">
+      <div class="block-header">
+        <div class="block-title">📝 学习笔记</div>
+      </div>
+      <div class="block-body">
+        <textarea class="note-area" placeholder="随手记笔记、灵感、疑问... 自动保存"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ STYLE B ============ -->
+<div class="style-content style-b" id="style-b">
+  <div class="sidebar">
+    <div class="sb-section">
+      <div class="sb-title">导航</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> 总览</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> 卡片库</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> 易错清单</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> 待补清单</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">冲刺计划</div>
+      <div class="sb-week-title">Week 1: Java 并发 <span class="sb-week-toggle">▼</span></div>
+      <div class="sb-item"><span class="sb-dot done"></span> D1 Java 基础</div>
+      <div class="sb-item active"><span class="sb-dot todo"></span> D2 HashMap</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> D3 ConcurrentHashMap</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> D4 线程基础</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> D5 锁+AQS</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> D6 线程池</div>
+      <div class="sb-item"><span class="sb-dot review"></span> D7 复盘</div>
+      <div class="sb-week-title">Week 2: JVM+MySQL <span class="sb-week-toggle">▶</span></div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="day-header">
+      <div class="day-badge">D2</div>
+      <div>
+        <div class="day-title">HashMap</div>
+        <div class="day-subtitle">底层结构 · put 流程 · 扩容机制 · 线程不安全</div>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-item done"><span class="timeline-time">20min</span> 复习</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item current"><span class="timeline-time">80min</span> 学习</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item"><span class="timeline-time">25min</span> 卡片</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item"><span class="timeline-time">20min</span> 算法</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item"><span class="timeline-time">15min</span> 复述</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item"><span class="timeline-time">20min</span> 模拟</div>
+    </div>
+
+    <div class="block block-kp">
+      <div class="block-header">
+        <div class="block-title">📌 重点知识（80min）</div>
+        <div class="block-progress">2/5 ✓</div>
+      </div>
+      <div class="block-body">
+        <div class="task done"><div class="checkbox"></div><span class="task-text">HashMap 底层结构</span></div>
+        <div class="task done"><div class="checkbox"></div><span class="task-text">put 流程</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">扩容机制</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">链表转红黑树</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">为什么线程不安全</span></div>
+      </div>
+    </div>
+
+    <div class="block block-mk">
+      <div class="block-header">
+        <div class="block-title">❓ 必会题</div>
+        <div class="block-progress">1/4 ✓</div>
+      </div>
+      <div class="block-body">
+        <div class="task done"><div class="checkbox"></div><span class="task-text">HashMap 底层原理？</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">HashMap 什么时候扩容？</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">HashMap 什么时候转红黑树？</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">HashMap 为什么线程不安全？</span></div>
+      </div>
+    </div>
+
+    <div class="block block-card">
+      <div class="block-header">
+        <div class="block-title">🃏 关键词卡片（25min）</div>
+        <div class="block-progress">0/1</div>
+      </div>
+      <div class="block-body">
+        <div class="flashcard">
+          <div class="flashcard-label">正面 · 题目</div>
+          <div class="flashcard-title">HashMap 原理</div>
+          <div class="flashcard-hint">点击翻转查看关键词 →</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="block block-algo">
+      <div class="block-header">
+        <div class="block-title">💻 算法练习（20min）</div>
+        <div class="block-progress">0/1</div>
+      </div>
+      <div class="block-body">
+        <div class="algo-item"><div class="checkbox"></div><span>反转链表</span><a class="algo-link" href="#">LC 206</a></div>
+      </div>
+    </div>
+
+    <div class="block block-mock">
+      <div class="block-header">
+        <div class="block-title">🎤 晚间模拟（20min）</div>
+        <div class="block-progress">1/3 ✓</div>
+      </div>
+      <div class="block-body">
+        <div class="mock-q done"><div class="checkbox" style="display:inline-block;vertical-align:middle;margin-right:6px"></div><span class="mock-text">请详细描述 HashMap 的 put 操作完整流程，包括 hash 计算和冲突处理</span></div>
+        <div class="mock-q"><div class="checkbox" style="display:inline-block;vertical-align:middle;margin-right:6px"></div><span class="mock-text">HashMap 在什么条件下会触发扩容？扩容过程是什么？</span></div>
+        <div class="mock-q"><div class="checkbox" style="display:inline-block;vertical-align:middle;margin-right:6px"></div><span class="mock-text">HashMap 为什么线程不安全？具体会出现什么问题？</span></div>
+      </div>
+    </div>
+
+    <div class="block block-custom">
+      <div class="block-header">
+        <div class="block-title">⭐ 自定义知识点</div>
+        <div class="block-progress">0</div>
+      </div>
+      <div class="block-body">
+        <div class="kp-add">
+          <input class="kp-input" placeholder="输入知识点，回车确认...">
+          <button class="kp-btn">确认</button>
+        </div>
+        <div class="kp-priority">
+          <button class="kp-pri-btn">🔴 阻塞</button>
+          <button class="kp-pri-btn">🟡 关联</button>
+          <button class="kp-pri-btn">🟢 加分</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="block block-note">
+      <div class="block-header">
+        <div class="block-title">📝 学习笔记</div>
+      </div>
+      <div class="block-body">
+        <textarea class="note-area" placeholder="随手记笔记、灵感、疑问... 自动保存"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ STYLE C ============ -->
+<div class="style-content style-c" id="style-c">
+  <div class="sidebar">
+    <div class="sb-section">
+      <div class="sb-title">导航</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> 总览</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> 卡片库</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> 易错清单</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> 待补清单</div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">冲刺计划</div>
+      <div class="sb-week-title">Week 1: Java 并发 <span class="sb-week-toggle">▼</span></div>
+      <div class="sb-item"><span class="sb-dot done"></span> D1 Java 基础</div>
+      <div class="sb-item active"><span class="sb-dot todo"></span> D2 HashMap</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> D3 ConcurrentHashMap</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> D4 线程基础</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> D5 锁+AQS</div>
+      <div class="sb-item"><span class="sb-dot todo"></span> D6 线程池</div>
+      <div class="sb-item"><span class="sb-dot review"></span> D7 复盘</div>
+      <div class="sb-week-title">Week 2: JVM+MySQL <span class="sb-week-toggle">▶</span></div>
+    </div>
+  </div>
+  <div class="main">
+    <div class="day-header">
+      <div class="day-badge">D2</div>
+      <div>
+        <div class="day-title">HashMap</div>
+        <div class="day-subtitle">底层结构 · put 流程 · 扩容机制 · 线程不安全</div>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-item done"><span class="timeline-time">20min</span> 复习</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item current"><span class="timeline-time">80min</span> 学习</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item"><span class="timeline-time">25min</span> 卡片</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item"><span class="timeline-time">20min</span> 算法</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item"><span class="timeline-time">15min</span> 复述</div>
+      <span class="timeline-arrow">→</span>
+      <div class="timeline-item"><span class="timeline-time">20min</span> 模拟</div>
+    </div>
+
+    <div class="block block-kp">
+      <div class="block-header">
+        <div class="block-title"><span class="block-icon">📌</span> 重点知识（80min）</div>
+        <div class="block-progress">2/5 ✓</div>
+      </div>
+      <div class="block-body">
+        <div class="task done"><div class="checkbox"></div><span class="task-text">HashMap 底层结构</span></div>
+        <div class="task done"><div class="checkbox"></div><span class="task-text">put 流程</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">扩容机制</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">链表转红黑树</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">为什么线程不安全</span></div>
+      </div>
+    </div>
+
+    <div class="block block-mk">
+      <div class="block-header">
+        <div class="block-title"><span class="block-icon">❓</span> 必会题</div>
+        <div class="block-progress">1/4 ✓</div>
+      </div>
+      <div class="block-body">
+        <div class="task done"><div class="checkbox"></div><span class="task-text">HashMap 底层原理？</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">HashMap 什么时候扩容？</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">HashMap 什么时候转红黑树？</span></div>
+        <div class="task"><div class="checkbox"></div><span class="task-text">HashMap 为什么线程不安全？</span></div>
+      </div>
+    </div>
+
+    <div class="block block-card">
+      <div class="block-header">
+        <div class="block-title"><span class="block-icon">🃏</span> 关键词卡片（25min）</div>
+        <div class="block-progress">0/1</div>
+      </div>
+      <div class="block-body">
+        <div class="flashcard">
+          <div class="flashcard-label">正面 · 题目</div>
+          <div class="flashcard-title">HashMap 原理</div>
+          <div class="flashcard-hint">点击翻转查看关键词 →</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="block block-algo">
+      <div class="block-header">
+        <div class="block-title"><span class="block-icon">💻</span> 算法练习（20min）</div>
+        <div class="block-progress">0/1</div>
+      </div>
+      <div class="block-body">
+        <div class="algo-item"><div class="checkbox"></div><span>反转链表</span><a class="algo-link" href="#">LC 206</a></div>
+      </div>
+    </div>
+
+    <div class="block block-mock">
+      <div class="block-header">
+        <div class="block-title"><span class="block-icon">🎤</span> 晚间模拟（20min）</div>
+        <div class="block-progress">1/3 ✓</div>
+      </div>
+      <div class="block-body">
+        <div class="mock-q done"><div class="checkbox" style="display:inline-block;vertical-align:middle;margin-right:6px"></div><span class="mock-text">请详细描述 HashMap 的 put 操作完整流程，包括 hash 计算和冲突处理</span></div>
+        <div class="mock-q"><div class="checkbox" style="display:inline-block;vertical-align:middle;margin-right:6px"></div><span class="mock-text">HashMap 在什么条件下会触发扩容？扩容过程是什么？</span></div>
+        <div class="mock-q"><div class="checkbox" style="display:inline-block;vertical-align:middle;margin-right:6px"></div><span class="mock-text">HashMap 为什么线程不安全？具体会出现什么问题？</span></div>
+      </div>
+    </div>
+
+    <div class="block block-custom">
+      <div class="block-header">
+        <div class="block-title"><span class="block-icon">⭐</span> 自定义知识点</div>
+        <div class="block-progress">0</div>
+      </div>
+      <div class="block-body">
+        <div class="kp-add">
+          <input class="kp-input" placeholder="输入知识点，回车确认...">
+          <button class="kp-btn">确认</button>
+        </div>
+        <div class="kp-priority">
+          <button class="kp-pri-btn">🔴 阻塞</button>
+          <button class="kp-pri-btn">🟡 关联</button>
+          <button class="kp-pri-btn">🟢 加分</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="block block-note">
+      <div class="block-header">
+        <div class="block-title"><span class="block-icon">📝</span> 学习笔记</div>
+      </div>
+      <div class="block-body">
+        <textarea class="note-area" placeholder="随手记笔记、灵感、疑问... 自动保存"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pros/Cons for each style -->
+<div class="pros-cons" id="pros-cons-a">
+  <div class="pc-grid">
+    <div class="pc-card pc-pros">
+      <div class="pc-title">✅ A 柔和渐变 · 优点</div>
+      一眼分清区块类型，扫视效率最高 · 视觉层次丰富，页面不"素" · 色彩柔和不刺眼，保持清爽感
+    </div>
+    <div class="pc-card pc-cons">
+      <div class="pc-title">⚠️ A 柔和渐变 · 注意</div>
+      区块多时颜色可能显得花哨 · 印刷/截图色彩还原有损耗 · 需要精心调色避免饱和度过高
+    </div>
+  </div>
+</div>
+<div class="pros-cons" id="pros-cons-b" style="display:none">
+  <div class="pc-grid">
+    <div class="pc-card pc-pros">
+      <div class="pc-title">✅ B 左侧色条 · 优点</div>
+      最克制，适合信息密度高的场景 · 白底为主，干净整洁 · 色条提供类型区分但不抢视觉焦点
+    </div>
+    <div class="pc-card pc-cons">
+      <div class="pc-title">⚠️ B 左侧色条 · 注意</div>
+      层次感较弱，区块之间区分度不如 A · 整体偏素，可能还是觉得"后台感" · 色条太细可能被忽略
+    </div>
+  </div>
+</div>
+<div class="pros-cons" id="pros-cons-c" style="display:none">
+  <div class="pc-grid">
+    <div class="pc-card pc-pros">
+      <div class="pc-title">✅ C 图标+标签色 · 优点</div>
+      最轻量，视觉干扰最小 · 图标本身有语义，不需要看颜色就知道区块类型 · 干净简洁
+    </div>
+    <div class="pc-card pc-cons">
+      <div class="pc-title">⚠️ C 图标+标签色 · 注意</div>
+      区分度最低，扫视时需要看图标而不是靠色彩直觉 · 可能还是偏素 · 图标颜色面积小，存在感弱
+    </div>
+  </div>
+</div>
+
+<script>
+function switchStyle(style) {
+  document.querySelectorAll('.style-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('style-' + style).classList.add('active');
+  event.target.classList.add('active');
+  
+  document.querySelectorAll('.pros-cons').forEach(el => el.style.display = 'none');
+  document.getElementById('pros-cons-' + style).style.display = 'block';
+}
+</script>
+</body>
+</html>

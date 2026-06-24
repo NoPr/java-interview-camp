@@ -1,0 +1,794 @@
+{
+  "source": "pdf",
+  "fileName": "热门面试题速记通关版.pdf",
+  "questions": [
+    {
+      "id": "pdf-1",
+      "question": "Java 中如何创建多线程？"
+    },
+    {
+      "id": "pdf-2",
+      "question": "什么是责任链模式？⼀般⽤在什么场景？"
+    },
+    {
+      "id": "pdf-3",
+      "question": "什么是策略模式？⼀般⽤在什么场景？"
+    },
+    {
+      "id": "pdf-4",
+      "question": "什么是模板⽅法模式？⼀般⽤在什么场景？"
+    },
+    {
+      "id": "pdf-5",
+      "question": "什么是观察者模式？⼀般⽤在什么场景？"
+    },
+    {
+      "id": "pdf-6",
+      "question": "什么是设计模式？请简述其作⽤。"
+    },
+    {
+      "id": "pdf-7",
+      "question": "MyBatis 中 #{} 和 ${} 的区别是什么？"
+    },
+    {
+      "id": "pdf-8",
+      "question": "什么是服务雪崩？"
+    },
+    {
+      "id": "pdf-9",
+      "question": "TCP/IP 四层模型是什么？"
+    },
+    {
+      "id": "pdf-10",
+      "question": "TCP 超时重传机制是为了解决什么问题？"
+    },
+    {
+      "id": "pdf-11",
+      "question": "说说 TCP 的四次挥⼿？"
+    },
+    {
+      "id": "pdf-12",
+      "question": "说说 TCP 的三次握⼿？"
+    },
+    {
+      "id": "pdf-13",
+      "question": "MySQL 的索引类型有哪些？"
+    },
+    {
+      "id": "pdf-14",
+      "question": "TCP 和 UDP 有什么区别？"
+    },
+    {
+      "id": "pdf-15",
+      "question": "TCP 是⽤来解决什么问题？"
+    },
+    {
+      "id": "pdf-16",
+      "question": "MySQL 索引的最左前缀匹配原则是什么？"
+    },
+    {
+      "id": "pdf-17",
+      "question": "在 MySQL 中建索引时需要注意哪些事项？"
+    },
+    {
+      "id": "pdf-18",
+      "question": "到底什么是 TCP 连接？"
+    },
+    {
+      "id": "pdf-19",
+      "question": "你在项⽬中使⽤的 Redis 客户端是什么？"
+    },
+    {
+      "id": "pdf-20",
+      "question": "MySQL 中的事务隔离级别有哪些？"
+    },
+    {
+      "id": "pdf-21",
+      "question": "MySQL 默认的事务隔离级别是什么？为什么选择这个级别？"
+    },
+    {
+      "id": "pdf-22",
+      "question": "MySQL 中 count(*)、count(1) 和 count(字段名) 有什么区别？"
+    },
+    {
+      "id": "pdf-23",
+      "question": "什么是分库分表？分库分表有哪些类型（或策略）？"
+    },
+    {
+      "id": "pdf-24",
+      "question": "Redis 通常应⽤于哪些场景？"
+    },
+    {
+      "id": "pdf-25",
+      "question": "Redis 中常⻅的数据类型有哪些？"
+    },
+    {
+      "id": "pdf-26",
+      "question": "Redis 数据过期后的删除策略是什么？"
+    },
+    {
+      "id": "pdf-27",
+      "question": "JVM 有那⼏种情况会产⽣ OOM（内存溢出）？"
+    },
+    {
+      "id": "pdf-28",
+      "question": "JVM 由哪些部分组成？"
+    },
+    {
+      "id": "pdf-29",
+      "question": "MySQL 三层 B+ 树能存多少数据？"
+    },
+    {
+      "id": "pdf-30",
+      "question": "MySQL 事务的⼆阶段提交是什么？"
+    },
+    {
+      "id": "pdf-31",
+      "question": "说说 Springboot 的启动流程？"
+    },
+    {
+      "id": "pdf-32",
+      "question": "SpringBoot 是如何实现⾃动配置的？"
+    },
+    {
+      "id": "pdf-33",
+      "question": "说说 Java 中 HashMap 的原理？"
+    },
+    {
+      "id": "pdf-34",
+      "question": "说说 Redisson 分布式锁的原理?"
+    },
+    {
+      "id": "pdf-35",
+      "question": "RabbitMQ 怎么实现延迟队列？"
+    },
+    {
+      "id": "pdf-36",
+      "question": "说说什么是 API ⽹关？它有什么作⽤？"
+    },
+    {
+      "id": "pdf-37",
+      "question": "线上 CPU 飙⾼如何排查？"
+    },
+    {
+      "id": "pdf-38",
+      "question": "为什么 RocketMQ 不使⽤ Zookeeper 作为注册中⼼呢？⽽选择⾃⼰实现 NameServer？"
+    },
+    {
+      "id": "pdf-39",
+      "question": "Netty 如何解决 JDK NIO 中的空轮询 Bug？"
+    },
+    {
+      "id": "pdf-40",
+      "question": "Netty 采⽤了哪些设计模式？"
+    },
+    {
+      "id": "pdf-41",
+      "question": "Netty 是如何解决粘包和拆包问题的？"
+    },
+    {
+      "id": "pdf-42",
+      "question": "Netty 性能为什么这么⾼？"
+    },
+    {
+      "id": "pdf-43",
+      "question": "为什么不选择使⽤原⽣的 NIO ⽽选择使⽤ Netty 呢？"
+    },
+    {
+      "id": "pdf-44",
+      "question": "在什么情况下，不推荐为数据库建⽴索引？"
+    },
+    {
+      "id": "pdf-45",
+      "question": "简单说说 Netty 的零拷⻉机制？"
+    },
+    {
+      "id": "pdf-46",
+      "question": "介绍⼀下 Reactor 线程模型？"
+    },
+    {
+      "id": "pdf-47",
+      "question": "说⼀下 Netty 的应⽤场景？"
+    },
+    {
+      "id": "pdf-48",
+      "question": "RabbitMQ 中消息什么时候会进⼊死信交换机？"
+    },
+    {
+      "id": "pdf-49",
+      "question": "RabbitMQ 中⽆法路由的消息会去到哪⾥？"
+    },
+    {
+      "id": "pdf-50",
+      "question": "消息发到 RabbitMQ ⾥头，如果 Exchange 根本找不到对应的 Queue，这条消息去哪⼉了？"
+    },
+    {
+      "id": "pdf-51",
+      "question": "Kafka为什么要抛弃 Zookeeper？"
+    },
+    {
+      "id": "pdf-52",
+      "question": "Kafka 中 Zookeeper 的作⽤？"
+    },
+    {
+      "id": "pdf-53",
+      "question": "什么是限流？限流算法有哪些？怎么实现的？"
+    },
+    {
+      "id": "pdf-54",
+      "question": "简述 MyBatis 的插件运⾏原理，以及如何编写⼀个插件？"
+    },
+    {
+      "id": "pdf-55",
+      "question": "说说 MyBatis 的缓存机制？"
+    },
+    {
+      "id": "pdf-56",
+      "question": "什么是代理模式？⼀般⽤在什么场景？"
+    },
+    {
+      "id": "pdf-57",
+      "question": "RocketMQ 的事务消息有什么缺点？你还了解过别的事务消息实现吗？"
+    },
+    {
+      "id": "pdf-58",
+      "question": "消息队列设计成推消息还是拉消息？推拉模式的优缺点？"
+    },
+    {
+      "id": "pdf-59",
+      "question": "消息队列如何处理消息堆积？"
+    },
+    {
+      "id": "pdf-60",
+      "question": "消息队列如何保证消息的有序性（顺序性）？"
+    },
+    {
+      "id": "pdf-61",
+      "question": "消息队列如何处理重复消息（保证消息的幂等性）？"
+    },
+    {
+      "id": "pdf-62",
+      "question": "消息队列如何保证消息不丢失？"
+    },
+    {
+      "id": "pdf-63",
+      "question": "⼯⼚模式和抽象⼯⼚模式有什么区别？"
+    },
+    {
+      "id": "pdf-64",
+      "question": "单例模式有哪⼏种实现？如何保证线程安全？"
+    },
+    {
+      "id": "pdf-65",
+      "question": "说⼀下消息队列的模型有哪些？"
+    },
+    {
+      "id": "pdf-66",
+      "question": "为什么需要消息队列？"
+    },
+    {
+      "id": "pdf-67",
+      "question": "MyBatis 与 Hibernate 有哪些不同？"
+    },
+    {
+      "id": "pdf-68",
+      "question": "分布式锁⼀般都怎样实现？"
+    },
+    {
+      "id": "pdf-69",
+      "question": "什么是服务熔断？"
+    },
+    {
+      "id": "pdf-70",
+      "question": "什么是服务降级？"
+    },
+    {
+      "id": "pdf-71",
+      "question": "HTTP 与 RPC 之间的区别？"
+    },
+    {
+      "id": "pdf-72",
+      "question": "负载均衡算法有哪些？"
+    },
+    {
+      "id": "pdf-73",
+      "question": "分布式和微服务有什么区别？"
+    },
+    {
+      "id": "pdf-74",
+      "question": "什么是 Seata？"
+    },
+    {
+      "id": "pdf-75",
+      "question": "如何理解 Spring Boot 中的 starter？"
+    },
+    {
+      "id": "pdf-76",
+      "question": "什么情况下需要使⽤分布式事务，有哪些⽅案？"
+    },
+    {
+      "id": "pdf-77",
+      "question": "说说 Spring 启动过程？"
+    },
+    {
+      "id": "pdf-78",
+      "question": "Spring Boot 是如何通过 main ⽅法启动 web 项⽬的？"
+    },
+    {
+      "id": "pdf-79",
+      "question": "Spring Boot 的核⼼特性有哪些？"
+    },
+    {
+      "id": "pdf-80",
+      "question": "什么是 Spring Boot？"
+    },
+    {
+      "id": "pdf-81",
+      "question": "什么是配置中⼼？有哪些常⻅的配置中⼼？"
+    },
+    {
+      "id": "pdf-82",
+      "question": "线上发现 Redis 机器爆了，如何优化？"
+    },
+    {
+      "id": "pdf-83",
+      "question": "什么是物理地址，什么是逻辑地址？"
+    },
+    {
+      "id": "pdf-84",
+      "question": "Select、Poll、Epoll 之间有什么区别？"
+    },
+    {
+      "id": "pdf-85",
+      "question": "Cookie、Session、Token 之间有什么区别？"
+    },
+    {
+      "id": "pdf-86",
+      "question": "OSI 七层模型是什么？"
+    },
+    {
+      "id": "pdf-87",
+      "question": "TCP 滑动窗⼝的作⽤是什么？"
+    },
+    {
+      "id": "pdf-88",
+      "question": "为什么 TCP 挥⼿需要有 TIME_WAIT 状态?"
+    },
+    {
+      "id": "pdf-89",
+      "question": "TCP 的粘包和拆包能说说吗？"
+    },
+    {
+      "id": "pdf-90",
+      "question": "HTTP 和 HTTPS 有什么区别？"
+    },
+    {
+      "id": "pdf-91",
+      "question": "HTTP 2.0 和 3.0 有什么区别？"
+    },
+    {
+      "id": "pdf-92",
+      "question": "HTTP 1.0 和 2.0 有什么区别？"
+    },
+    {
+      "id": "pdf-93",
+      "question": "Redis 性能瓶颈时如何处理？"
+    },
+    {
+      "id": "pdf-94",
+      "question": "如何使⽤ Redis 快速实现布隆过滤器？"
+    },
+    {
+      "id": "pdf-95",
+      "question": "如何使⽤ Redis 快速实现排⾏榜？"
+    },
+    {
+      "id": "pdf-96",
+      "question": "Redis 中如何保证缓存与数据库的数据⼀致性？"
+    },
+    {
+      "id": "pdf-97",
+      "question": "Redis 中的缓存击穿、缓存穿透和缓存雪崩是什么？"
+    },
+    {
+      "id": "pdf-98",
+      "question": "Redis 实现分布式锁时可能遇到的问题有哪些？"
+    },
+    {
+      "id": "pdf-99",
+      "question": "Redis 中如何实现分布式锁？"
+    },
+    {
+      "id": "pdf-100",
+      "question": "Redis 集群会出现脑裂问题吗？"
+    },
+    {
+      "id": "pdf-101",
+      "question": "Redis 集群的实现原理是什么？"
+    },
+    {
+      "id": "pdf-102",
+      "question": "Redis 主从复制的实现原理是什么？"
+    },
+    {
+      "id": "pdf-103",
+      "question": "Redis 的哨兵机制是什么？"
+    },
+    {
+      "id": "pdf-104",
+      "question": "Redis 在⽣成 RDB ⽂件时如何处理请求？"
+    },
+    {
+      "id": "pdf-105",
+      "question": "Redis 的持久化机制有哪些？"
+    },
+    {
+      "id": "pdf-106",
+      "question": "如何解决 Redis 中的热点 key 问题？"
+    },
+    {
+      "id": "pdf-107",
+      "question": "Redis 中的 Big Key 问题是什么？如何解决？"
+    },
+    {
+      "id": "pdf-108",
+      "question": "Redis 的 Pipeline 功能是什么？"
+    },
+    {
+      "id": "pdf-109",
+      "question": "Redis 的 Lua 脚本功能是什么？如何使⽤？"
+    },
+    {
+      "id": "pdf-110",
+      "question": "Redis 中有哪些内存淘汰策略？"
+    },
+    {
+      "id": "pdf-111",
+      "question": "Redis ⽀持事务吗？如何实现？"
+    },
+    {
+      "id": "pdf-112",
+      "question": "Redis 和 Memcached 有哪些区别？"
+    },
+    {
+      "id": "pdf-113",
+      "question": "Redis 的 hash 是什么？"
+    },
+    {
+      "id": "pdf-114",
+      "question": "为什么 Redis 设计为单线程？6.0 版本为何引⼊多线程？"
+    },
+    {
+      "id": "pdf-115",
+      "question": "Redis 为什么这么快？"
+    },
+    {
+      "id": "pdf-116",
+      "question": "MySQL 中如何解决深度分⻚的问题？"
+    },
+    {
+      "id": "pdf-117",
+      "question": "如何处理 MySQL 的主从同步延迟？"
+    },
+    {
+      "id": "pdf-118",
+      "question": "什么是 MySQL 的主从同步机制？它是如何实现的？"
+    },
+    {
+      "id": "pdf-119",
+      "question": "MySQL 中如何进⾏ SQL 调优？"
+    },
+    {
+      "id": "pdf-120",
+      "question": "如何使⽤ MySQL 的 EXPLAIN 语句进⾏查询分析？"
+    },
+    {
+      "id": "pdf-121",
+      "question": "MySQL 中如果发⽣死锁应该如何解决？"
+    },
+    {
+      "id": "pdf-122",
+      "question": "MySQL 的乐观锁和悲观锁是什么？"
+    },
+    {
+      "id": "pdf-123",
+      "question": "MySQL 中有哪些锁类型？"
+    },
+    {
+      "id": "pdf-124",
+      "question": "数据库的脏读、不可重复读和幻读分别是什么？"
+    },
+    {
+      "id": "pdf-125",
+      "question": "什么是 MyBatis-Plus？它有什么作⽤？它和 MyBatis 有哪些区别？"
+    },
+    {
+      "id": "pdf-126",
+      "question": "MySQL 中⻓事务可能会导致哪些问题？"
+    },
+    {
+      "id": "pdf-127",
+      "question": "如何设计⼀个点赞系统？"
+    },
+    {
+      "id": "pdf-128",
+      "question": "为什么 MySQL 选择使⽤ B+ 树作为索引结构？"
+    },
+    {
+      "id": "pdf-129",
+      "question": "数组和链表在 Java 中的区别是什么？"
+    },
+    {
+      "id": "pdf-130",
+      "question": "MySQL 中的索引数量是否越多越好？为什么？"
+    },
+    {
+      "id": "pdf-131",
+      "question": "MySQL 中使⽤索引⼀定有效吗？如何排查索引效果？"
+    },
+    {
+      "id": "pdf-132",
+      "question": "说明没⽤上。 Extra ⾥出现 Using index 表⽰覆盖索引命中，性能好；要是有 Using filesort 或 Using temporary，"
+    },
+    {
+      "id": "pdf-133",
+      "question": "MySQL 的索引下推是什么？"
+    },
+    {
+      "id": "pdf-134",
+      "question": "MySQL 的覆盖索引是什么？"
+    },
+    {
+      "id": "pdf-135",
+      "question": "MySQL 中的回表是什么？"
+    },
+    {
+      "id": "pdf-136",
+      "question": "MySQL InnoDB 引擎中的聚簇索引和⾮聚簇索引有什么区别？"
+    },
+    {
+      "id": "pdf-137",
+      "question": "MySQL 的存储引擎有哪些？它们之间有什么区别？"
+    },
+    {
+      "id": "pdf-138",
+      "question": "Spring 有哪⼏种事务传播⾏为?"
+    },
+    {
+      "id": "pdf-139",
+      "question": "你了解的 Spring 都⽤到哪些设计模式？"
+    },
+    {
+      "id": "pdf-140",
+      "question": "Spring MVC 具体的⼯作原理？"
+    },
+    {
+      "id": "pdf-141",
+      "question": "说下 Spring Bean 的⽣命周期？"
+    },
+    {
+      "id": "pdf-142",
+      "question": "为什么 Spring 循环依赖需要三级缓存，⼆级不够吗？"
+    },
+    {
+      "id": "pdf-143",
+      "question": "Spring 如何解决循环依赖？"
+    },
+    {
+      "id": "pdf-144",
+      "question": "什么是循环依赖（常问）？"
+    },
+    {
+      "id": "pdf-145",
+      "question": "Spring AOP默认⽤的是什么动态代理，两者的区别？"
+    },
+    {
+      "id": "pdf-146",
+      "question": "什么是 AOP？"
+    },
+    {
+      "id": "pdf-147",
+      "question": "Spring 中的 DI 是什么？"
+    },
+    {
+      "id": "pdf-148",
+      "question": "什么是 Spring IOC？"
+    },
+    {
+      "id": "pdf-149",
+      "question": "Java 中 HashMap 的扩容机制是怎样的？"
+    },
+    {
+      "id": "pdf-150",
+      "question": "看过源码吗？说下 Spring 由哪些重要的模块组成？"
+    },
+    {
+      "id": "pdf-151",
+      "question": "为什么 HashMap 在 Java 中扩容时采⽤ 2 的 n 次⽅倍？"
+    },
+    {
+      "id": "pdf-152",
+      "question": "常⽤的 JVM 配置参数有哪些？"
+    },
+    {
+      "id": "pdf-153",
+      "question": "如何对 Java 的垃圾回收进⾏调优？"
+    },
+    {
+      "id": "pdf-154",
+      "question": "JVM 垃圾回收调优的主要⽬标是什么？"
+    },
+    {
+      "id": "pdf-155",
+      "question": "为什么 Java 中 HashMap 的默认负载因⼦是 0.75？"
+    },
+    {
+      "id": "pdf-156",
+      "question": "Java 中有哪些垃圾回收算法？"
+    },
+    {
+      "id": "pdf-157",
+      "question": "为什么 JDK 1.8 对 HashMap 进⾏了红⿊树的改动？"
+    },
+    {
+      "id": "pdf-158",
+      "question": "JDK 1.8 对 HashMap 除了红⿊树还进⾏了哪些改动？"
+    },
+    {
+      "id": "pdf-159",
+      "question": "Java 中 ConcurrentHashMap 1.7 和 1.8 之间有哪些区别？"
+    },
+    {
+      "id": "pdf-160",
+      "question": "线程和进程有什么区别？"
+    },
+    {
+      "id": "pdf-161",
+      "question": "线程的⽣命周期在 Java 中是如何定义的？"
+    },
+    {
+      "id": "pdf-162",
+      "question": "你了解 Java 线程池的原理吗？"
+    },
+    {
+      "id": "pdf-163",
+      "question": "如何合理地设置 Java 线程池的线程数？"
+    },
+    {
+      "id": "pdf-164",
+      "question": "Java 中常⻅的垃圾收集器有哪些？"
+    },
+    {
+      "id": "pdf-165",
+      "question": "JVM 的内存区域是如何划分的？"
+    },
+    {
+      "id": "pdf-166",
+      "question": "Java 线程池有哪些拒绝策略？"
+    },
+    {
+      "id": "pdf-167",
+      "question": "你使⽤过哪些 Java 并发⼯具类？"
+    },
+    {
+      "id": "pdf-168",
+      "question": "编译执⾏与解释执⾏的区别是什么？JVM 使⽤哪种⽅式？"
+    },
+    {
+      "id": "pdf-169",
+      "question": "Synchronized 和 ReentrantLock 有什么区别？"
+    },
+    {
+      "id": "pdf-170",
+      "question": "如何优化 Java 中的锁的使⽤？"
+    },
+    {
+      "id": "pdf-171",
+      "question": "说说 AQS 吧？"
+    },
+    {
+      "id": "pdf-172",
+      "question": "Java 中 volatile 关键字的作⽤是什么？"
+    },
+    {
+      "id": "pdf-173",
+      "question": "什么是 Java 的 CAS（Compare-And-Swap）操作？"
+    },
+    {
+      "id": "pdf-174",
+      "question": "Java 中的 final 关键字是否能保证变量的可⻅性？"
+    },
+    {
+      "id": "pdf-175",
+      "question": "Java 中什么情况会导致死锁？如何避免？"
+    },
+    {
+      "id": "pdf-176",
+      "question": "为什么 Java 中的 ThreadLocal 对 key 的引⽤为弱引⽤？"
+    },
+    {
+      "id": "pdf-177",
+      "question": "为什么 Java 8 移除了永久代（PermGen）并引⼊了元空间（Metaspace）？"
+    },
+    {
+      "id": "pdf-178",
+      "question": "MySQL 中 如果我 select * from ⼀个有 1000 万⾏的表，内存会飙升么？"
+    },
+    {
+      "id": "pdf-179",
+      "question": "Java 线程池核⼼线程数在运⾏过程中能修改吗？如何修改？"
+    },
+    {
+      "id": "pdf-180",
+      "question": "从⽹络⻆度来看，⽤户从输⼊⽹址到⽹⻚显⽰，期间发⽣了什么？"
+    },
+    {
+      "id": "pdf-181",
+      "question": "3）谁占的内存？"
+    },
+    {
+      "id": "pdf-182",
+      "question": "怎么分析 JVM 当前的内存占⽤情况？OOM 后怎么分析？"
+    },
+    {
+      "id": "pdf-183",
+      "question": "分析 JVM 内存占⽤，第⼀步是看整体分布。⽤ jstat -gc <pid> 能实时看到年轻代、⽼年代、元空间和 GC 执⾏"
+    },
+    {
+      "id": "pdf-184",
+      "question": "Dubbo 和 Spring Cloud Gateway 有什么区别？"
+    },
+    {
+      "id": "pdf-185",
+      "question": "如何设计⼀个秒杀功能？"
+    },
+    {
+      "id": "pdf-186",
+      "question": "Java 的 synchronized 是怎么实现的？"
+    },
+    {
+      "id": "pdf-187",
+      "question": "什么是 Java 内存模型（JMM）？"
+    },
+    {
+      "id": "pdf-188",
+      "question": "什么是 Java 中的原⼦性、可⻅性和有序性？"
+    },
+    {
+      "id": "pdf-189",
+      "question": "MySQL 是如何实现事务的？"
+    },
+    {
+      "id": "pdf-190",
+      "question": "让你设计⼀个 RPC 框架，怎么设计？"
+    },
+    {
+      "id": "pdf-191",
+      "question": "让你设计⼀个短链系统，怎么设计？"
+    },
+    {
+      "id": "pdf-192",
+      "question": "让你设计⼀个分布式 ID 发号器，怎么设计？"
+    },
+    {
+      "id": "pdf-193",
+      "question": "说⼀下 Kafka 中关于事务消息的实现？"
+    },
+    {
+      "id": "pdf-194",
+      "question": "什么是 Java 中的 ABA 问题？"
+    },
+    {
+      "id": "pdf-195",
+      "question": "Redis 中跳表的实现原理是什么？"
+    },
+    {
+      "id": "pdf-196",
+      "question": "说⼀下 RocketMQ 中关于事务消息的实现？"
+    },
+    {
+      "id": "pdf-197",
+      "question": "MySQL 中的 MVCC 是什么？"
+    }
+  ]
+}

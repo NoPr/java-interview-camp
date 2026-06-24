@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>复盘日布局对比 — Java 面试冲刺 Dashboard</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #fafafa; --bg-card: #ffffff; --bg-soft: #f5f5f5;
+  --border: #e5e7eb; --border-light: #f0f0f0;
+  --text: #1a1a1a; --text-2: #6b7280; --text-3: #9ca3af;
+  --accent: #2563eb; --accent-bg: #eff6ff; --accent-light: #bfdbfe;
+  --green: #16a34a; --green-light: #dcfce7;
+  --orange: #ea580c; --orange-light: #fff7ed;
+  --red: #dc2626; --red-light: #fee2e2;
+  --purple: #7c3aed; --purple-light: #f3f0ff;
+  --yellow: #ca8a04; --yellow-light: #fefce8;
+}
+body { font-family: -apple-system, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+/* Tabs */
+.tab-bar { display: flex; gap: 0; background: var(--bg-card); border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 100; padding: 0 24px; }
+.tab-btn { padding: 14px 24px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; background: none; color: var(--text-2); border-bottom: 3px solid transparent; transition: all 0.15s; }
+.tab-btn:hover { color: var(--accent); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-desc { flex: 1; text-align: right; font-size: 12px; color: var(--text-3); padding: 14px 0; }
+
+/* Layout */
+.page { display: flex; min-height: calc(100vh - 50px); }
+.sidebar { width: 240px; background: var(--bg-card); border-right: 1px solid var(--border); padding: 16px; overflow-y: auto; flex-shrink: 0; }
+.main { flex: 1; padding: 24px 32px; max-width: 900px; overflow-y: auto; }
+
+/* Sidebar */
+.sb-section { margin-bottom: 16px; }
+.sb-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-3); margin-bottom: 6px; }
+.sb-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; font-size: 13px; cursor: pointer; color: var(--text-2); }
+.sb-item:hover { background: var(--bg-soft); }
+.sb-item.active { background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+.sb-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sb-dot.done { background: var(--green); }
+.sb-dot.todo { background: #d1d5db; }
+.sb-dot.review { background: var(--purple); }
+.sb-week-title { font-size: 12px; font-weight: 600; color: var(--text-2); padding: 8px 8px 4px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.sb-week-toggle { font-size: 10px; color: var(--text-3); }
+
+/* Day header */
+.day-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.day-badge { width: 48px; height: 48px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+.day-badge.review { background: var(--purple-light); color: var(--purple); }
+.day-info h1 { font-size: 22px; font-weight: 700; }
+.day-info p { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+.day-tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; background: var(--purple-light); color: var(--purple); margin-left: 8px; }
+
+/* Section blocks */
+.section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+.section-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border-light); }
+.section-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.section-time { font-size: 12px; color: var(--text-3); }
+.section-progress { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.section-progress.done { color: var(--green); }
+.section-body { padding: 8px 18px 14px; }
+
+/* Task items */
+.task { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; font-size: 14px; cursor: pointer; }
+.task:hover { color: var(--accent); }
+.checkbox { width: 18px; height: 18px; border: 1.5px solid #d1d5db; border-radius: 4px; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.task.done .checkbox { background: var(--green); border-color: var(--green); }
+.task.done .checkbox::after { content: '✓'; color: white; font-size: 12px; font-weight: bold; }
+.task.done .task-text { text-decoration: line-through; color: var(--text-3); }
+.task-text { flex: 1; line-height: 1.5; }
+.task-tag { display: inline-block; font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+.tag-block { background: var(--red-light); color: var(--red); }
+.tag-relate { background: var(--yellow-light); color: var(--yellow); }
+.tag-plus { background: var(--green-light); color: var(--green); }
+.task-source { font-size: 11px; color: var(--text-3); margin-left: 4px; }
+
+/* Mock questions */
+.mock-q { padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+.mock-q:last-child { border-bottom: none; }
+.mock-q-header { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.mock-q-text { flex: 1; font-size: 14px; line-height: 1.5; }
+.mock-tips { margin-top: 8px; margin-left: 28px; padding: 10px 14px; background: var(--bg-soft); border-radius: 6px; font-size: 13px; color: var(--text-2); display: none; line-height: 1.6; }
+.mock-tips.open { display: block; }
+.mock-tips-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-3); margin-bottom: 4px; }
+
+/* Flashcard inline */
+.card-inline { background: var(--accent-bg); border: 1px solid var(--accent-light); border-radius: 8px; padding: 16px; cursor: pointer; transition: all 0.2s; }
+.card-inline:hover { box-shadow: 0 2px 8px rgba(37,99,235,0.1); }
+.card-inline.flipped { background: var(--bg-card); }
+.card-label { font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-3); margin-bottom: 4px; }
+.card-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.card-content { font-size: 13px; color: var(--text-2); line-height: 1.6; display: none; }
+.card-inline.flipped .card-content { display: block; }
+.card-inline.flipped .card-title { color: var(--accent); }
+.card-actions { display: flex; gap: 8px; margin-top: 10px; }
+.card-btn { font-size: 12px; padding: 4px 12px; border-radius: 6px; border: 1px solid; cursor: pointer; font-weight: 500; }
+.card-btn.ok { border-color: var(--green); color: var(--green); background: var(--green-light); }
+.card-btn.no { border-color: var(--red); color: var(--red); background: var(--red-light); }
+
+/* Algo inline */
+.algo-inline { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 14px; }
+.algo-link { font-size: 11px; color: var(--text-3); text-decoration: none; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); }
+.algo-link:hover { color: var(--accent); border-color: var(--accent); }
+
+/* Review overview */
+.review-overview { background: linear-gradient(135deg, var(--purple-light) 0%, var(--accent-bg) 100%); border: 1px solid var(--accent-light); border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
+.review-overview h2 { font-size: 18px; font-weight: 700; color: var(--purple); margin-bottom: 12px; }
+.review-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+.review-stat { text-align: center; }
+.review-stat-num { font-size: 28px; font-weight: 700; color: var(--text); }
+.review-stat-label { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+.review-weeks { display: flex; gap: 4px; margin-top: 12px; }
+.review-day-dot { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; }
+.review-day-dot.done { background: var(--green); color: white; }
+.review-day-dot.partial { background: var(--orange-light); color: var(--orange); }
+.review-day-dot.todo { background: var(--bg-soft); color: var(--text-3); border: 1px solid var(--border); }
+
+/* Custom KP */
+.kp-add { display: flex; gap: 8px; margin-top: 8px; }
+.kp-input { flex: 1; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; outline: none; }
+.kp-input:focus { border-color: var(--accent); }
+.kp-priority { display: flex; gap: 4px; }
+.kp-pri-btn { font-size: 11px; padding: 4px 8px; border-radius: 4px; border: 1px solid; cursor: pointer; font-weight: 500; }
+.kp-pri-btn.sel-block { border-color: var(--red); background: var(--red-light); color: var(--red); }
+.kp-pri-btn.sel-relate { border-color: var(--yellow); background: var(--yellow-light); color: var(--yellow); }
+.kp-pri-btn.sel-plus { border-color: var(--green); background: var(--green-light); color: var(--green); }
+
+/* Note */
+.note-area { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 10px; font-size: 13px; min-height: 60px; outline: none; resize: vertical; font-family: inherit; }
+.note-area:focus { border-color: var(--accent); }
+
+/* Tier controls */
+.tier-bar { display: flex; gap: 4px; background: var(--bg-soft); border-radius: 8px; padding: 3px; }
+.tier-btn { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 5px; border: none; cursor: pointer; background: none; color: var(--text-2); }
+.tier-btn.active { background: var(--bg-card); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+/* Streak */
+.streak { font-size: 14px; font-weight: 600; color: var(--orange); }
+
+/* Scheme label */
+.scheme-label { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; }
+.scheme-a { background: var(--blue-light); color: var(--accent); }
+.scheme-b { background: var(--purple-light); color: var(--purple); }
+.scheme-c { background: var(--green-light); color: var(--green); }
+
+/* Callout */
+.callout { display: flex; gap: 8px; align-items: flex-start; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 12px; }
+.callout-warn { background: var(--yellow-light); border: 1px solid #fde68a; color: var(--yellow); }
+.callout-info { background: var(--accent-bg); border: 1px solid var(--accent-light); color: var(--accent); }
+
+/* Comparison note */
+.compare-note { position: fixed; bottom: 16px; right: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 12px; color: var(--text-2); box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 200; max-width: 280px; }
+</style>
+</head>
+<body>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchScheme('a')">方案 A · 完全一样</button>
+  <button class="tab-btn" onclick="switchScheme('b')">方案 B · 复盘日特殊布局（推荐）</button>
+  <button class="tab-btn" onclick="switchScheme('c')">方案 C · 普通日 + 追加区块</button>
+  <div class="tab-desc">点击 Tab 切换方案对比</div>
+</div>
+
+<div class="page">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar"></div>
+  
+  <!-- Main content -->
+  <div class="main" id="mainContent"></div>
+</div>
+
+<!-- Floating comparison note -->
+<div class="compare-note" id="compareNote"></div>
+
+<script>
+// === DATA ===
+const PLAN = {
+  weeks: [
+    { week: 1, title: "Week 1 · Java 并发", days: "Day 1-7", color: "w1" },
+    { week: 2, title: "Week 2 · JVM + MySQL", days: "Day 8-15", color: "w2" }
+  ],
+  days: [
+    { day: 1, week: 1, title: "Java 基础总复盘", topics: "面向对象、final/static、String、Stream/Lambda" },
+    { day: 2, week: 1, title: "HashMap", topics: "底层结构、put 流程、扩容、红黑树、线程不安全" },
+    { day: 3, week: 1, title: "ConcurrentHashMap", topics: "Segment 分段锁、CAS+synchronized、put 流程" },
+    { day: 4, week: 1, title: "线程基础 + volatile + CAS", topics: "线程生命周期、JMM、volatile、CAS、ABA" },
+    { day: 5, week: 1, title: "锁机制 + AQS", topics: "ThreadLocal、synchronized 锁升级、ReentrantLock、AQS" },
+    { day: 6, week: 1, title: "线程池", topics: "七大参数、execute 流程、拒绝策略、OOM" },
+    { day: 7, week: 1, title: "第 1 周复盘", isReview: true, topics: "开口复述、案例整理、易错清单、处理待补" },
+    { day: 8, week: 2, title: "JVM 内存结构", topics: "程序计数器、栈、堆、方法区" },
+    { day: 9, week: 2, title: "GC 与垃圾回收器", topics: "GC Roots、标记算法、CMS/G1/ZGC" },
+    { day: 10, week: 2, title: "类加载 + 双亲委派", topics: "类加载过程、双亲委派、Tomcat 打破" },
+    { day: 11, week: 2, title: "OOM 排查 + Flink", topics: "jstack/jmap/MAT、OOM 排查流程、Flink 架构" },
+    { day: 12, week: 2, title: "MySQL 索引", topics: "B+ 树、回表、覆盖索引、索引失效" },
+    { day: 13, week: 2, title: "MySQL 事务 + MVCC", topics: "ACID、隔离级别、MVCC、Read View" },
+    { day: 14, week: 2, title: "MySQL 锁 + MyBatis", topics: "行锁/间隙锁、慢SQL、MyBatis 缓存" },
+    { day: 15, week: 2, title: "第 2 周复盘", isReview: true, topics: "JVM+MySQL 高频题复述、案例整理" }
+  ],
+  reviewDay7: {
+    tasks: [
+      "把 Day 1-6 的问题全部开口讲一遍",
+      "重点复述线程池 OOM 案例",
+      "整理一版「Java 并发高频题清单」",
+      "开始维护「易错清单」，从今天起每天更新"
+    ],
+    backlog: [
+      { text: "(n-1) & hash 为什么等价于取模？", priority: "relate", from: "Day 2" },
+      { text: "CHM sizeCtl 字段含义", priority: "relate", from: "Day 3" },
+      { text: "ABA 问题的实际场景", priority: "relate", from: "Day 4" },
+      { text: "Java 21 虚拟线程", priority: "plus", from: "Day 6" }
+    ],
+    mock: [
+      { q: "HashMap 底层原理？请从数据结构、put 流程、扩容机制三个角度展开。", tips: "数组+链表/红黑树 → hash 计算 → 桶定位 → 冲突处理(链表/树化) → 负载因子0.75触发扩容 → 容量翻倍" },
+      { q: "ConcurrentHashMap JDK 1.8 怎么保证线程安全？", tips: "CAS 写空桶 + synchronized 锁链表头节点 → 分段粒度更细 → CounterCell 统计 size → 多线程协助扩容" },
+      { q: "synchronized 锁升级过程？", tips: "无锁 → 偏向锁(第一个线程) → 轻量级锁(CAS 自旋) → 重量级锁(OS 互斥量) → 不可逆降级" },
+      { q: "线程池任务提交流程？", tips: "corePool → 阻塞队列 → maxPool → 拒绝策略。core 满了入队列，队列满了开到 max，再满执行拒绝策略" },
+      { q: "volatile 能保证原子性吗？为什么？", tips: "不能。volatile 保证可见性(刷主存) + 有序性(禁止重排序)，但不保证原子性。i++ 是读-改-写三步，volatile 无法保证原子性" }
+    ],
+    card: { title: "HashMap 原理", keywords: "基于拉链法的哈希表 → 数组+链表/红黑树 → put 三步(hash→定位→写入) → 负载因子0.75扩容 → 线程不安全用CHM" },
+    algo: { title: "反转链表", lc: "206" }
+  }
+};
+
+let currentScheme = 'a';
+let state = { tasks: {}, mock: {}, algo: {}, streak: 12 };
+let flipped = {};
+let tipsOpen = {};
+let cardStatus = {};
+let expandedWeek = 1;
+let currentDay = 7;
+
+// === RENDER SIDEBAR ===
+function renderSidebar() {
+  const sb = document.getElementById('sidebar');
+  let html = '<div class="sb-section"><div class="sb-title">工具箱</div>';
+  html += '<div class="sb-item"><span>📊 总览</span></div>';
+  html += '<div class="sb-item"><span>🃏 卡片库</span></div>';
+  html += '<div class="sb-item"><span>📝 易错清单</span></div>';
+  html += '<div class="sb-item"><span>📋 待补清单</span></div>';
+  html += '</div>';
+
+  PLAN.weeks.forEach(w => {
+    const isExpanded = expandedWeek === w.week;
+    html += `<div class="sb-section"><div class="sb-week-title" onclick="toggleWeek(${w.week})">
+      ${w.title} <span class="sb-week-toggle">${isExpanded ? '▼' : '▶'}</span>
+    </div>`;
+    if (isExpanded) {
+      PLAN.days.filter(d => d.week === w.week).forEach(d => {
+        const isActive = currentDay === d.day;
+        const dotClass = d.day < 7 ? 'done' : (d.day === 7 ? 'review' : 'todo');
+        const dotColor = d.isReview ? 'review' : dotClass;
+        html += `<div class="sb-item ${isActive?'active':''}" onclick="selectDay(${d.day})">
+          <span class="sb-dot ${dotColor}"></span>
+          <span>D${d.day}</span> ${d.title}
+        </div>`;
+      });
+    }
+    html += '</div>';
+  });
+
+  sb.innerHTML = html;
+}
+
+function toggleWeek(w) { expandedWeek = expandedWeek === w ? null : w; renderSidebar(); }
+function selectDay(d) { currentDay = d; renderSidebar(); renderMain(); }
+
+// === RENDER MAIN ===
+function renderMain() {
+  const main = document.getElementById('mainContent');
+  const d = PLAN.days.find(x => x.day === currentDay);
+  if (d.isReview) {
+    if (currentScheme === 'a') main.innerHTML = renderReviewA(d);
+    else if (currentScheme === 'b') main.innerHTML = renderReviewB(d);
+    else main.innerHTML = renderReviewC(d);
+  } else {
+    main.innerHTML = renderNormalDay(d);
+  }
+  updateCompareNote();
+}
+
+// === SCHEME A: Same layout ===
+function renderReviewA(d) {
+  const r = PLAN.reviewDay7;
+  let html = `<div class="day-header">
+    <div class="day-badge review">复</div>
+    <div class="day-info"><h1>Day 7 · ${d.title}<span class="day-tag">复盘日</span></h1>
+    <p>${d.topics}</p></div>
+  </div>`;
+
+  // Tasks
+  html += sectionBlock('📋', '复盘任务清单', '30min', '0/4', `
+    ${r.tasks.map((t, i) => taskItem(`rev-task-${i}`, t)).join('')}
+  `);
+
+  // Backlog
+  html += `<div class="section">
+    <div class="section-header"><div class="section-title">🟡 本周待补清单</div>
+    <div class="section-progress">0/4</div></div>
+    <div class="section-body">
+      ${r.backlog.map((b, i) => `
+        <div class="task" onclick="toggle('tasks','backlog-${i}',this)">
+          <div class="checkbox"></div>
+          <span class="task-text">${b.text}<span class="task-tag tag-${b.priority==='relate'?'relate':'plus'}">${b.priority==='relate'?'🟡 关联':'🟢 加分'}</span><span class="task-source">← ${b.from}</span></span>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+
+  // Card
+  html += sectionBlock('🃏', '关键词卡片', '25min', '0/1', renderCard(r.card, 'review-card'));
+
+  // Algo
+  html += sectionBlock('💻', '算法练习', '20min', '0/1', `
+    <div class="algo-inline">
+      <div class="checkbox" onclick="this.classList.toggle('done')" style="cursor:pointer"></div>
+      <span>${r.algo.title}</span>
+      <a class="algo-link" href="#" onclick="return false">LC ${r.algo.lc}</a>
+    </div>
+  `);
+
+  // Mock
+  html += `<div class="section">
+    <div class="section-header"><div class="section-title">🎤 晚间模拟</div>
+    <div class="section-progress">0/5</div></div>
+    <div class="section-body">
+      ${r.mock.map((m, i) => renderMockQ(m, i, 'rev-mock')).join('')}
+    </div>
+  </div>`;
+
+  // Custom KP
+  html += renderCustomKp(7);
+
+  // Note
+  html += renderNote(7);
+
+  return html;
+}
+
+// === SCHEME B: Special review layout ===
+function renderReviewB(d) {
+  const r = PLAN.reviewDay7;
+  let html = `<div class="day-header">
+    <div class="day-badge review">复</div>
+    <div class="day-info"><h1>Day 7 · ${d.title}<span class="day-tag">复盘日</span></h1>
+    <p>${d.topics}</p></div>
+  </div>`;
+
+  // Review overview — ONLY in scheme B
+  html += `<div class="review-overview">
+    <h2>📊 本周回顾</h2>
+    <div class="review-stats">
+      <div class="review-stat"><div class="review-stat-num">6/6</div><div class="review-stat-label">学习日完成</div></div>
+      <div class="review-stat"><div class="review-stat-num" style="color:var(--orange)">🔥 6</div><div class="review-stat-label">连续打卡</div></div>
+      <div class="review-stat"><div class="review-stat-num">23/28</div><div class="review-stat-label">任务完成</div></div>
+      <div class="review-stat"><div class="review-stat-num">4</div><div class="review-stat-label">待补知识点</div></div>
+    </div>
+    <div class="review-weeks">
+      ${[1,2,3,4,5,6].map(day => `<div class="review-day-dot done">D${day}</div>`).join('')}
+      <div class="review-day-dot" style="background:var(--purple-light);color:var(--purple);border:1px solid var(--purple)">D7</div>
+    </div>
+  </div>`;
+
+  // Backlog — split by priority
+  html += `<div class="section">
+    <div class="section-header"><div class="section-title">🟡 本周待补清单（关联型）</div>
+    <div class="section-progress">0/3</div></div>
+    <div class="section-body">
+      ${r.backlog.filter(b => b.priority === 'relate').map((b, i) => `
+        <div class="task" onclick="this.classList.toggle('done')">
+          <div class="checkbox"></div>
+          <span class="task-text">${b.text}<span class="task-tag tag-relate">🟡 关联</span><span class="task-source">← ${b.from}</span></span>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+
+  html += `<div class="section">
+    <div class="section-header"><div class="section-title">🟢 本周加分清单（加分型）</div>
+    <div class="section-progress">0/1</div></div>
+    <div class="section-body">
+      ${r.backlog.filter(b => b.priority === 'plus').map((b, i) => `
+        <div class="task" onclick="this.classList.toggle('done')">
+          <div class="checkbox"></div>
+          <span class="task-text">${b.text}<span class="task-tag tag-plus">🟢 加分</span><span class="task-source">← ${b.from}</span></span>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+
+  // Review tasks
+  html += sectionBlock('📋', '复盘任务', '30min', '0/4', `
+    ${r.tasks.map((t, i) => taskItem(`revb-task-${i}`, t)).join('')}
+  `);
+
+  // Mock
+  html += `<div class="section">
+    <div class="section-header"><div class="section-title">🎤 模拟面试（本周综合）</div>
+    <div class="section-progress">0/5</div></div>
+    <div class="section-body">
+      ${r.mock.map((m, i) => renderMockQ(m, i, 'revb-mock')).join('')}
+    </div>
+  </div>`;
+
+  // Note
+  html += renderNote(7);
+
+  return html;
+}
+
+// === SCHEME C: Normal day + extra ===
+function renderReviewC(d) {
+  const r = PLAN.reviewDay7;
+  let html = `<div class="day-header">
+    <div class="day-badge review">复</div>
+    <div class="day-info"><h1>Day 7 · ${d.title}<span class="day-tag">复盘日</span></h1>
+    <p>${d.topics}</p></div>
+  </div>`;
+
+  // Normal day content — keyPoints (as if it's a normal learning day)
+  html += sectionBlock('📌', '重点知识', '80min', '0/5', `
+    <div class="task"><div class="checkbox"></div><span class="task-text">HashMap 底层结构（回顾）</span></div>
+    <div class="task"><div class="checkbox"></div><span class="task-text">ConcurrentHashMap CAS+synchronized（回顾）</span></div>
+    <div class="task"><div class="checkbox"></div><span class="task-text">synchronized 锁升级（回顾）</span></div>
+    <div class="task"><div class="checkbox"></div><span class="task-text">线程池核心参数（回顾）</span></div>
+    <div class="task"><div class="checkbox"></div><span class="task-text">volatile 可见性 vs 原子性（回顾）</span></div>
+  `);
+
+  // Must know
+  html += sectionBlock('❓', '必会题', '—', '0/4', `
+    <div class="task"><div class="checkbox"></div><span class="task-text">HashMap 底层原理？</span></div>
+    <div class="task"><div class="checkbox"></div><span class="task-text">CHM 怎么保证线程安全？</span></div>
+    <div class="task"><div class="checkbox"></div><span class="task-text">synchronized 锁升级过程？</span></div>
+    <div class="task"><div class="checkbox"></div><span class="task-text">线程池任务提交流程？</span></div>
+  `);
+
+  // Card
+  html += sectionBlock('🃏', '关键词卡片', '25min', '0/1', renderCard(r.card, 'revc-card'));
+
+  // Algo
+  html += sectionBlock('💻', '算法练习', '20min', '0/1', `
+    <div class="algo-inline">
+      <div class="checkbox" onclick="this.classList.toggle('done')" style="cursor:pointer"></div>
+      <span>${r.algo.title}</span>
+      <a class="algo-link" href="#" onclick="return false">LC ${r.algo.lc}</a>
+    </div>
+  `);
+
+  // Mock
+  html += `<div class="section">
+    <div class="section-header"><div class="section-title">🎤 晚间模拟</div>
+    <div class="section-progress">0/5</div></div>
+    <div class="section-body">
+      ${r.mock.map((m, i) => renderMockQ(m, i, 'revc-mock')).join('')}
+    </div>
+  </div>`;
+
+  // === EXTRA: backlog ===
+  html += `<div class="callout callout-info"><span>💡</span><span>以下为复盘日额外聚合的待补知识点</span></div>`;
+  html += `<div class="section">
+    <div class="section-header"><div class="section-title">🟡 本周待补清单</div>
+    <div class="section-progress">0/4</div></div>
+    <div class="section-body">
+      ${r.backlog.map((b, i) => `
+        <div class="task" onclick="this.classList.toggle('done')">
+          <div class="checkbox"></div>
+          <span class="task-text">${b.text}<span class="task-tag tag-${b.priority==='relate'?'relate':'plus'}">${b.priority==='relate'?'🟡 关联':'🟢 加分'}</span><span class="task-source">← ${b.from}</span></span>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+
+  // Note
+  html += renderNote(7);
+
+  return html;
+}
+
+// === Normal day (for reference) ===
+function renderNormalDay(d) {
+  let html = `<div class="day-header">
+    <div class="day-badge" style="background:#fee2e2;color:#dc2626">D${d.day}</div>
+    <div class="day-info"><h1>${d.title}</h1><p>${d.topics}</p></div>
+  </div>`;
+  html += `<div class="callout callout-info"><span>💡</span><span>这是一个普通学习日的展示（作为对比参考）。请切换到 Day 7 查看复盘日的三种方案。</span></div>`;
+  html += sectionBlock('📌', '重点知识', '80min', '0/5', `
+    <div class="task" onclick="this.classList.toggle('done')"><div class="checkbox"></div><span class="task-text">知识点 1</span></div>
+    <div class="task" onclick="this.classList.toggle('done')"><div class="checkbox"></div><span class="task-text">知识点 2</span></div>
+    <div class="task" onclick="this.classList.toggle('done')"><div class="checkbox"></div><span class="task-text">知识点 3</span></div>
+  `);
+  return html;
+}
+
+// === Helpers ===
+function sectionBlock(icon, title, time, progress, body) {
+  return `<div class="section">
+    <div class="section-header">
+      <div class="section-title">${icon} ${title} <span class="section-time">${time}</span></div>
+      <div class="section-progress">${progress}</div>
+    </div>
+    <div class="section-body">${body}</div>
+  </div>`;
+}
+
+function taskItem(id, text) {
+  return `<div class="task" onclick="this.classList.toggle('done')">
+    <div class="checkbox"></div>
+    <span class="task-text">${text}</span>
+  </div>`;
+}
+
+function renderCard(card, id) {
+  const isFlipped = flipped[id];
+  const status = cardStatus[id];
+  return `<div class="card-inline ${isFlipped?'flipped':''}" onclick="flipCard('${id}', event)">
+    <div class="card-label">${isFlipped ? '背面 · 关键词锚点' : '正面 · 题目'}</div>
+    <div class="card-title">${card.title}</div>
+    <div class="card-content">${card.keywords}</div>
+    ${isFlipped ? `<div class="card-actions" onclick="event.stopPropagation()">
+      <button class="card-btn ok ${status==='ok'?'':''}" onclick="rateCard('${id}','ok')">✅ 能讲清楚</button>
+      <button class="card-btn no" onclick="rateCard('${id}','no')">❌ 还不熟</button>
+    </div>` : '<div style="font-size:11px;color:var(--text-3);margin-top:6px">点击翻转自测 →</div>'}
+  </div>`;
+}
+
+function renderMockQ(m, i, prefix) {
+  const id = `${prefix}-${i}`;
+  const isOpen = tipsOpen[id];
+  return `<div class="mock-q">
+    <div class="mock-q-header" onclick="toggleTips('${id}', this)">
+      <div class="checkbox" onclick="event.stopPropagation();this.parentElement.parentElement.classList.toggle('done')" style="cursor:pointer"></div>
+      <div class="mock-q-text">${m.q}</div>
+    </div>
+    <div class="mock-tips ${isOpen?'open':''}">
+      <div class="mock-tips-label">参考要点</div>
+      ${m.tips}
+    </div>
+  </div>`;
+}
+
+function renderCustomKp(day) {
+  return `<div class="section">
+    <div class="section-header"><div class="section-title">⭐ 自定义知识点</div>
+    <div class="section-progress">0</div></div>
+    <div class="section-body">
+      <div class="kp-add">
+        <input class="kp-input" placeholder="输入知识点，回车确认..." onkeydown="if(event.key==='Enter')this.value=''">
+        <div class="kp-priority">
+          <button class="kp-pri-btn sel-block" onclick="this.classList.toggle('sel-block')">🔴</button>
+          <button class="kp-pri-btn" onclick="this.classList.toggle('sel-relate')">🟡</button>
+          <button class="kp-pri-btn" onclick="this.classList.toggle('sel-plus')">🟢</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderNote(day) {
+  return `<div class="section">
+    <div class="section-header"><div class="section-title">📝 学习笔记</div></div>
+    <div class="section-body">
+      <textarea class="note-area" placeholder="随手记笔记、灵感、疑问... 自动保存"></textarea>
+    </div>
+  </div>`;
+}
+
+// === Interactions ===
+function switchScheme(s) {
+  currentScheme = s;
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', ['a','b','c'][i] === s);
+  });
+  renderMain();
+}
+
+function flipCard(id, e) {
+  e.stopPropagation();
+  flipped[id] = !flipped[id];
+  renderMain();
+}
+
+function rateCard(id, rating) {
+  cardStatus[id] = rating;
+  renderMain();
+}
+
+function toggleTips(id, el) {
+  tipsOpen[id] = !tipsOpen[id];
+  renderMain();
+}
+
+function updateCompareNote() {
+  const notes = {
+    a: '方案 A：复盘日跟普通日完全一样的布局。知识点、必会题、卡片、算法、模拟全部显示，底部多了待补清单。内容重复，看起来像要重新学一遍。',
+    b: '方案 B：复盘日专属布局。顶部本周回顾概览（完成率/打卡/待补数），然后是待补清单（按 🟡/🟢 分组），复盘任务，最后模拟面试。没有知识点和必会题 — 因为那是学习日的事。',
+    c: '方案 C：普通日布局 + 底部追加待补区块。保留了知识点/必会题等（标注"回顾"），底部多了一个提示条 + 待补清单。结构跟普通日一致，但内容重复。'
+  };
+  document.getElementById('compareNote').textContent = notes[currentScheme];
+}
+
+// === INIT ===
+renderSidebar();
+renderMain();
+</script>
+</body>
+</html>

@@ -1,0 +1,1377 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<title>Editorial Hybrid v3 · 完整产品</title>
+<style>
+  /* ============================================================ */
+  /* Editorial Hybrid v3 —— 修复 6 个问题                          */
+  /* 1. 区块顺序+时间 2.模拟题折叠 3.卡片翻转自评                  */
+  /* 4.自定义优先级+阻塞提示 5.响应式抽屉                          */
+  /* ============================================================ */
+
+  :root {
+    --h-serif: 'Noto Serif SC', serif;
+    --h-sans: 'Noto Sans SC', system-ui, sans-serif;
+    --h-mono: 'JetBrains Mono', monospace;
+
+    --h-canvas: #faf9f6;
+    --h-paper: #ffffff;
+    --h-mist: #f4f2ec;
+    --h-mist-deep: #ece9df;
+    --h-sidebar: #f6f4ee;
+
+    --h-ink: #1c1c1a;
+    --h-ink-soft: #4a4a45;
+    --h-ink-muted: #8a8a82;
+    --h-ink-faint: #b8b8b0;
+
+    --h-brand: #15803d;
+    --h-brand-deep: #14532d;
+    --h-brand-mid: #166534;
+    --h-brand-olive: #65a30d;
+    --h-amber: #d97706;
+    --h-amber-deep: #92400e;
+
+    --h-red: #dc2626;
+    --h-yellow: #d97706;
+    --h-green: #16a34a;
+    --h-gray: #6b7280;
+    --h-orange: #f97316;
+    --h-purple: #8b5cf6;
+
+    --h-border: #e6e3da;
+    --h-border-soft: #f0ede4;
+
+    --h-shadow-sm: 0 1px 2px rgba(28,28,26,0.04);
+    --h-shadow-md: 0 2px 8px rgba(28,28,26,0.06), 0 1px 2px rgba(28,28,26,0.04);
+    --h-shadow-lg: 0 8px 24px rgba(28,28,26,0.08);
+
+    --h-r-sm: 4px;
+    --h-r-md: 8px;
+    --h-r-lg: 12px;
+    --h-r-pill: 20px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--h-sans);
+    background: var(--h-canvas);
+    color: var(--h-ink-soft);
+    font-size: 13px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ============================================================ */
+  /* 侧边栏                                                        */
+  /* ============================================================ */
+  .sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--h-sidebar);
+    border-right: 1px solid var(--h-border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    transition: transform 250ms cubic-bezier(0.2, 0.6, 0.2, 1);
+    z-index: 100;
+  }
+  .sidebar-brand {
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--h-border-soft);
+  }
+  .sidebar-brand-title {
+    font-family: var(--h-serif);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--h-ink);
+  }
+  .sidebar-brand-sub {
+    font-size: 10px;
+    color: var(--h-ink-faint);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2px;
+    font-family: var(--h-mono);
+  }
+
+  .sidebar-section { padding: 8px 0; }
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--h-ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 6px 18px 4px;
+  }
+  .sidebar-divider { height: 1px; background: var(--h-border-soft); margin: 6px 12px; }
+
+  .week-row {
+    padding: 8px 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 150ms ease;
+  }
+  .week-row:hover { background: var(--h-mist); }
+  .week-arrow { font-size: 10px; color: var(--h-ink-muted); width: 10px; }
+  .week-name { font-size: 12px; font-weight: 600; color: var(--h-ink); flex: 1; }
+  .week-progress { font-family: var(--h-mono); font-size: 10px; color: var(--h-ink-faint); }
+
+  .day-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 18px 5px 32px;
+    font-size: 12px;
+    color: var(--h-ink-soft);
+    cursor: pointer;
+    transition: all 150ms ease;
+    position: relative;
+  }
+  .day-item:hover { background: var(--h-mist); color: var(--h-ink); }
+  .day-item.active {
+    background: #e8f3ec;
+    color: var(--h-brand-deep);
+    font-weight: 600;
+  }
+  .day-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--h-brand);
+  }
+  .day-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    border: 1.5px solid var(--h-border);
+    flex-shrink: 0;
+  }
+  .day-dot.done { background: var(--h-green); border-color: var(--h-green); }
+  .day-dot.review { background: var(--h-mist-deep); border-color: var(--h-ink-faint); }
+  .day-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .day-pct { font-family: var(--h-mono); font-size: 9px; color: var(--h-ink-faint); }
+
+  .toolbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 18px;
+    font-size: 12px;
+    color: var(--h-ink-soft);
+    cursor: pointer;
+    transition: all 150ms ease;
+  }
+  .toolbox-item:hover { background: var(--h-mist); color: var(--h-ink); }
+  .toolbox-icon { font-size: 13px; width: 16px; }
+
+  /* 问题6修复：窄屏抽屉遮罩 */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(28,28,26,0.3);
+    z-index: 99;
+  }
+
+  /* ============================================================ */
+  /* 主区                                                          */
+  /* ============================================================ */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+  }
+
+  /* Header */
+  .header {
+    height: 52px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    background: var(--h-paper);
+    border-bottom: 1px solid var(--h-border);
+    box-shadow: var(--h-shadow-sm);
+    z-index: 10;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-title { font-family: var(--h-serif); font-size: 14px; font-weight: 600; color: var(--h-ink); }
+  .header-breadcrumb { font-size: 11px; color: var(--h-ink-muted); font-family: var(--h-mono); }
+  .header-breadcrumb span { margin: 0 4px; color: var(--h-ink-faint); }
+
+  /* 问题6修复：汉堡按钮（窄屏显示） */
+  .menu-toggle {
+    display: none;
+    width: 32px; height: 32px;
+    border: 1px solid var(--h-border);
+    border-radius: var(--h-r-md);
+    background: var(--h-paper);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--h-ink-soft);
+  }
+
+  .header-right { display: flex; align-items: center; gap: 8px; }
+
+  .tier-switch {
+    display: flex;
+    border: 1px solid var(--h-border);
+    border-radius: var(--h-r-md);
+    overflow: hidden;
+  }
+  .tier-btn {
+    padding: 4px 11px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--h-ink-muted);
+    background: var(--h-paper);
+    border: none;
+    cursor: pointer;
+    transition: all 150ms ease;
+    font-family: var(--h-mono);
+  }
+  .tier-btn.active { background: var(--h-brand); color: #fff; }
+  .tier-btn:hover:not(.active) { background: var(--h-mist); color: var(--h-ink); }
+
+  .streak {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--h-orange);
+    padding: 4px 10px;
+    background: #fff7ed;
+    border-radius: var(--h-r-md);
+    font-family: var(--h-mono);
+  }
+
+  .h-btn {
+    padding: 5px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--h-ink-soft);
+    background: var(--h-paper);
+    border: 1px solid var(--h-border);
+    border-radius: var(--h-r-md);
+    cursor: pointer;
+    transition: all 150ms ease;
+    font-family: var(--h-sans);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .h-btn:hover { background: var(--h-mist); border-color: var(--h-ink-faint); }
+
+  .content-scroll { flex: 1; overflow-y: auto; }
+  .content { max-width: 860px; margin: 0 auto; padding: 28px 36px 64px; }
+
+  /* ===== 问题4修复：阻塞型提示条 ===== */
+  .block-alert {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-left: 4px solid var(--h-red);
+    border-radius: var(--h-r-md);
+    padding: 10px 14px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #991b1b;
+    font-weight: 500;
+    animation: h-fade-up 400ms cubic-bezier(0.2, 0.6, 0.2, 1);
+  }
+  .block-alert-icon { font-size: 14px; }
+  .block-alert-text { flex: 1; }
+  .block-alert-count {
+    font-family: var(--h-mono);
+    font-weight: 700;
+    padding: 1px 7px;
+    background: #fee2e2;
+    border-radius: var(--h-r-pill);
+  }
+
+  /* ===== Hero ===== */
+  .h-hero {
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--h-ink);
+    animation: h-fade-up 500ms cubic-bezier(0.2, 0.6, 0.2, 1);
+  }
+  .h-eyebrow {
+    font-family: var(--h-mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--h-brand);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .h-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--h-brand); }
+  .h-title {
+    font-family: var(--h-serif);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--h-ink);
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .h-title-icon { font-size: 30px; filter: drop-shadow(0 2px 4px rgba(28,28,26,0.1)); }
+
+  .h-meta { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .h-meta-item { display: flex; flex-direction: column; gap: 2px; }
+  .h-meta-label {
+    font-size: 9px;
+    color: var(--h-ink-faint);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .h-meta-value { font-family: var(--h-mono); font-size: 14px; font-weight: 500; color: var(--h-ink); }
+  .h-meta-div { width: 1px; height: 28px; background: var(--h-border); }
+  .h-meta-progress { flex: 1; min-width: 140px; }
+
+  .h-progress-wrap { display: flex; align-items: center; gap: 10px; margin-top: 3px; }
+  .h-progress-track {
+    flex: 1; height: 8px;
+    background: var(--h-mist);
+    border-radius: var(--h-r-pill);
+    overflow: hidden;
+  }
+  .h-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--h-brand-deep) 0%, var(--h-brand) 50%, #22c55e 100%);
+    border-radius: var(--h-r-pill);
+    transition: width 800ms cubic-bezier(0.2, 0.6, 0.2, 1);
+  }
+  .h-progress-text {
+    font-family: var(--h-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--h-brand-deep);
+    flex-shrink: 0;
+    min-width: 36px;
+    text-align: right;
+  }
+
+  /* ===== 章节区 ===== */
+  .h-section {
+    margin-bottom: 26px;
+    animation: h-fade-up 500ms cubic-bezier(0.2, 0.6, 0.2, 1) both;
+  }
+  .h-section:nth-child(2) { animation-delay: 60ms; }
+  .h-section:nth-child(3) { animation-delay: 120ms; }
+  .h-section:nth-child(4) { animation-delay: 180ms; }
+  .h-section:nth-child(5) { animation-delay: 240ms; }
+  .h-section:nth-child(6) { animation-delay: 300ms; }
+  .h-section:nth-child(7) { animation-delay: 360ms; }
+  .h-section:nth-child(8) { animation-delay: 420ms; }
+
+  @keyframes h-fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .h-section-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--h-border-soft);
+  }
+  .h-section-num {
+    font-family: var(--h-mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: var(--h-r-sm);
+    flex-shrink: 0;
+  }
+  .h-section-bar { width: 3px; height: 16px; border-radius: 2px; flex-shrink: 0; }
+  .h-section-head h3 {
+    font-family: var(--h-serif);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--h-ink);
+    flex: 1;
+  }
+  /* 问题1修复：count 旁边加预计时间 */
+  .h-section-count {
+    font-family: var(--h-mono);
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--h-ink-muted);
+  }
+  .h-section-time {
+    font-family: var(--h-mono);
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--h-ink-faint);
+    margin-left: 4px;
+  }
+
+  /* 章节配色 */
+  .h-section.review .h-section-num { background: #f5f3ff; color: var(--h-purple); }
+  .h-section.review .h-section-bar { background: var(--h-purple); }
+  .h-section.knowledge .h-section-num { background: #ecfdf5; color: var(--h-brand-deep); }
+  .h-section.knowledge .h-section-bar { background: var(--h-brand-deep); }
+  .h-section.card .h-section-num { background: #f0fdf4; color: var(--h-green); }
+  .h-section.card .h-section-bar { background: var(--h-green); }
+  .h-section.algo .h-section-num { background: #fff7ed; color: var(--h-orange); }
+  .h-section.algo .h-section-bar { background: var(--h-orange); }
+  .h-section.featured .h-section-num { background: #fffbeb; color: var(--h-amber-deep); }
+  .h-section.featured .h-section-bar { background: var(--h-amber); }
+  .h-section.mock .h-section-num { background: #ecfccb; color: var(--h-brand-olive); }
+  .h-section.mock .h-section-bar { background: var(--h-brand-olive); }
+
+  .h-section.featured {
+    background: var(--h-paper);
+    border: 1px solid var(--h-border);
+    border-radius: var(--h-r-lg);
+    padding: 20px 24px;
+    box-shadow: var(--h-shadow-md);
+  }
+  .h-section.featured .h-section-head { border-bottom-color: var(--h-border); margin-bottom: 14px; }
+
+  /* ===== 列表项 ===== */
+  .h-list { display: flex; flex-direction: column; gap: 5px; }
+  .h-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 12px;
+    background: var(--h-paper);
+    border: 1px solid var(--h-border-soft);
+    border-radius: var(--h-r-md);
+    transition: all 180ms ease;
+    animation: h-fade-up 400ms cubic-bezier(0.2, 0.6, 0.2, 1) both;
+    position: relative;
+  }
+  .h-item:hover { border-color: var(--h-border); box-shadow: var(--h-shadow-sm); }
+  .h-item.done .h-text { color: var(--h-ink-faint); text-decoration: line-through; text-decoration-color: var(--h-ink-faint); }
+
+  /* 问题4修复：阻塞型高亮 */
+  .h-item.blocked {
+    border-left: 3px solid var(--h-red);
+    background: #fef9f9;
+  }
+  .h-item.blocked .h-text { font-weight: 500; }
+
+  .h-del {
+    width: 20px; height: 20px;
+    border: none;
+    background: transparent;
+    color: var(--h-ink-faint);
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: var(--h-r-sm);
+    transition: all 160ms ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0;
+    font-family: var(--h-sans);
+  }
+  .h-item:hover .h-del { opacity: 1; }
+  .h-del:hover { color: var(--h-red); background: #fee2e2; }
+
+  .h-cb {
+    width: 15px; height: 15px;
+    border: 1.5px solid var(--h-border);
+    border-radius: var(--h-r-sm);
+    flex-shrink: 0;
+    margin-top: 2px;
+    cursor: pointer;
+    transition: all 180ms ease;
+    position: relative;
+    background: var(--h-paper);
+  }
+  .h-cb:hover { border-color: var(--h-brand); }
+  .h-cb.checked { border-color: transparent; }
+  .h-cb.checked::after {
+    content: '';
+    position: absolute;
+    top: 1px; left: 4px;
+    width: 4px; height: 7px;
+    border: solid #fff;
+    border-width: 0 1.5px 1.5px 0;
+    transform: rotate(45deg);
+  }
+  .h-section.review .h-cb.checked { background: var(--h-purple); }
+  .h-section.knowledge .h-cb.checked { background: var(--h-brand-deep); }
+  .h-section.card .h-cb.checked { background: var(--h-green); }
+  .h-section.algo .h-cb.checked { background: var(--h-orange); }
+  .h-section.featured .h-cb.checked { background: var(--h-amber); }
+  .h-section.mock .h-cb.checked { background: var(--h-brand-olive); }
+
+  .h-text { flex: 1; font-size: 13px; color: var(--h-ink-soft); line-height: 1.6; }
+  .h-text code {
+    font-family: var(--h-mono);
+    font-size: 12px;
+    background: var(--h-mist);
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: var(--h-brand-deep);
+  }
+
+  .h-day {
+    font-family: var(--h-mono);
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 9px;
+    background: var(--h-mist);
+    color: var(--h-ink-muted);
+    border-radius: var(--h-r-pill);
+    flex-shrink: 0;
+    cursor: pointer;
+    transition: all 160ms ease;
+    border: 1px solid transparent;
+  }
+  .h-day:hover { background: var(--h-paper); color: var(--h-brand); border-color: var(--h-brand); }
+
+  .h-prio {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--h-r-pill);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .h-prio.red { background: #fef2f2; color: #991b1b; }
+  .h-prio.yellow { background: #fffbeb; color: #92400e; }
+  .h-prio.green { background: #f0fdf4; color: #166534; }
+
+  .h-q-item { border-left: 3px solid transparent; }
+  .h-q-item.both { border-left-color: var(--h-brand); }
+  .h-q-item.md-only { border-left-color: var(--h-brand-olive); }
+  .h-q-item.pdf-only { border-left-color: var(--h-amber); }
+
+  .h-filter { display: flex; gap: 5px; margin-bottom: 12px; flex-wrap: wrap; }
+  .h-filter-badge { font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: var(--h-r-pill); }
+  .h-filter-badge.red { background: #fee2e2; color: #991b1b; }
+  .h-filter-badge.yellow { background: #fef3c7; color: #92400e; }
+  .h-filter-badge.green { background: #d1fae5; color: #065f46; }
+
+  /* 问题4修复：添加输入框 + 优先级选择 */
+  .h-add-row {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .h-add-input {
+    flex: 1;
+    min-width: 180px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-family: var(--h-sans);
+    border: 1px dashed var(--h-border);
+    border-radius: var(--h-r-md);
+    background: transparent;
+    color: var(--h-ink-soft);
+    outline: none;
+    transition: all 180ms ease;
+  }
+  .h-add-input:focus { border-style: solid; border-color: var(--h-brand); background: var(--h-paper); }
+  .h-add-input::placeholder { color: var(--h-ink-faint); }
+  .prio-pick {
+    display: flex;
+    gap: 3px;
+  }
+  .prio-pick-btn {
+    width: 26px; height: 26px;
+    border: 1px solid var(--h-border);
+    border-radius: var(--h-r-sm);
+    background: var(--h-paper);
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 150ms ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .prio-pick-btn:hover { transform: scale(1.1); }
+  .prio-pick-btn.selected.red { background: #fee2e2; border-color: var(--h-red); }
+  .prio-pick-btn.selected.yellow { background: #fef3c7; border-color: var(--h-yellow); }
+  .prio-pick-btn.selected.green { background: #d1fae5; border-color: var(--h-green); }
+  .h-add-confirm {
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--h-brand);
+    border: none;
+    border-radius: var(--h-r-md);
+    cursor: pointer;
+    transition: all 150ms ease;
+    font-family: var(--h-sans);
+  }
+  .h-add-confirm:hover { background: var(--h-brand-deep); }
+
+  /* ===== 问题2修复：模拟题折叠参考要点 ===== */
+  .mock-tips {
+    margin: 4px 0 6px 25px;
+    padding: 8px 12px;
+    background: #fefcf3;
+    border-left: 2px solid var(--h-brand-olive);
+    border-radius: 0 var(--h-r-sm) var(--h-r-sm) 0;
+    font-size: 12px;
+    color: var(--h-ink-soft);
+    line-height: 1.6;
+  }
+  .mock-tips-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--h-brand-olive);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 3px;
+    font-family: var(--h-mono);
+  }
+  .mock-tips summary {
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--h-ink-muted);
+    font-family: var(--h-mono);
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .mock-tips summary::-webkit-details-marker { display: none; }
+  .mock-tips summary::before { content: '▸'; transition: transform 200ms ease; }
+  .mock-tips[open] summary::before { transform: rotate(90deg); }
+  .mock-tips summary:hover { color: var(--h-brand-olive); }
+
+  .mock-timer {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: var(--h-mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--h-r-pill);
+    flex-shrink: 0;
+  }
+  .mock-timer.yellow { background: #fef3c7; color: #92400e; }
+  .mock-timer.red { background: #fee2e2; color: #991b1b; }
+
+  /* ===== 问题3修复：关键词卡片翻转 + 自评 ===== */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .keyword-card {
+    perspective: 800px;
+    height: 110px;
+    cursor: pointer;
+  }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 500ms cubic-bezier(0.2, 0.6, 0.2, 1);
+    transform-style: preserve-3d;
+  }
+  .keyword-card.flipped .card-inner { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: var(--h-r-md);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--h-border-soft);
+    background: var(--h-paper);
+  }
+  .card-front { border-color: var(--h-border-soft); }
+  .card-front:hover { border-color: var(--h-green); box-shadow: var(--h-shadow-md); }
+
+  .card-back {
+    transform: rotateY(180deg);
+    background: #f0fdf4;
+    border-color: var(--h-green);
+  }
+
+  .keyword-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--h-ink);
+    margin-bottom: 4px;
+  }
+  .keyword-card-title code {
+    font-family: var(--h-mono);
+    font-size: 13px;
+    color: var(--h-green);
+  }
+  .keyword-card-hint {
+    font-size: 11px;
+    color: var(--h-ink-muted);
+    line-height: 1.5;
+    flex: 1;
+  }
+  .keyword-card-flip {
+    font-size: 10px;
+    color: var(--h-ink-faint);
+    margin-top: 6px;
+    font-family: var(--h-mono);
+  }
+
+  /* 翻转后背面：答案 + 自评按钮 */
+  .card-back-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--h-green);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+    font-family: var(--h-mono);
+  }
+  .card-back-answer {
+    font-size: 12px;
+    color: var(--h-ink-soft);
+    line-height: 1.5;
+    flex: 1;
+  }
+  .card-eval {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .card-eval-btn {
+    flex: 1;
+    padding: 4px;
+    border: 1px solid var(--h-border);
+    border-radius: var(--h-r-sm);
+    background: var(--h-paper);
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 150ms ease;
+  }
+  .card-eval-btn.pass:hover { background: #d1fae5; border-color: var(--h-green); }
+  .card-eval-btn.fail:hover { background: #fee2e2; border-color: var(--h-red); }
+
+  /* 算法题 */
+  .algo-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    background: var(--h-paper);
+    border: 1px solid var(--h-border-soft);
+    border-radius: var(--h-r-md);
+    transition: all 180ms ease;
+  }
+  .algo-item:hover { border-color: var(--h-orange); box-shadow: var(--h-shadow-sm); }
+  .algo-name { flex: 1; font-size: 13px; color: var(--h-ink-soft); }
+  .algo-lc {
+    font-family: var(--h-mono);
+    font-size: 11px;
+    color: var(--h-orange);
+    padding: 2px 9px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: var(--h-r-pill);
+    text-decoration: none;
+    transition: all 160ms ease;
+    flex-shrink: 0;
+  }
+  .algo-lc:hover { background: #ffedd5; }
+
+  /* 复习区块 */
+  .review-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    background: #faf8ff;
+    border: 1px solid #ede9fe;
+    border-radius: var(--h-r-md);
+    transition: all 180ms ease;
+  }
+  .review-item:hover { border-color: var(--h-purple); }
+  .review-from {
+    font-family: var(--h-mono);
+    font-size: 10px;
+    color: var(--h-purple);
+    padding: 2px 8px;
+    background: #f5f3ff;
+    border-radius: var(--h-r-pill);
+    flex-shrink: 0;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 3px; }
+
+  /* 问题6修复：响应式抽屉 */
+  @media (max-width: 900px) {
+    .sidebar {
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      transform: translateX(-100%);
+      box-shadow: var(--h-shadow-lg);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar.open ~ .sidebar-overlay { display: block; }
+    .menu-toggle { display: flex; }
+    .content { padding: 20px 18px 48px; }
+    .h-title { font-size: 26px; }
+    .header { padding: 0 16px; }
+    .header-right .h-btn:nth-child(n+3) { display: none; }
+  }
+  @media (max-width: 600px) {
+    .tier-switch { display: none; }
+    .streak { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- 侧边栏 -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-title">☕ Java 面试冲刺</div>
+      <div class="sidebar-brand-sub">30 DAYS · 2026</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">学习进度</div>
+
+      <div class="week-row">
+        <span class="week-arrow">▾</span>
+        <span class="week-name">Week 1 · 基础夯实</span>
+        <span class="week-progress">5/7</span>
+      </div>
+      <div class="day-item">
+        <span class="day-dot done"></span>
+        <span class="day-text">Day 1 · Java 基础</span>
+        <span class="day-pct">100%</span>
+      </div>
+      <div class="day-item">
+        <span class="day-dot done"></span>
+        <span class="day-text">Day 2 · 集合</span>
+        <span class="day-pct">100%</span>
+      </div>
+      <div class="day-item">
+        <span class="day-dot done"></span>
+        <span class="day-text">Day 3 · HashMap</span>
+        <span class="day-pct">100%</span>
+      </div>
+      <div class="day-item active">
+        <span class="day-dot"></span>
+        <span class="day-text">Day 4 · 并发基础</span>
+        <span class="day-pct">53%</span>
+      </div>
+      <div class="day-item">
+        <span class="day-dot"></span>
+        <span class="day-text">Day 5 · 锁机制</span>
+        <span class="day-pct">0%</span>
+      </div>
+      <div class="day-item">
+        <span class="day-dot"></span>
+        <span class="day-text">Day 6 · 线程池</span>
+        <span class="day-pct">0%</span>
+      </div>
+      <div class="day-item">
+        <span class="day-dot review"></span>
+        <span class="day-text">Day 7 · 复盘</span>
+        <span class="day-pct">—</span>
+      </div>
+
+      <div class="week-row">
+        <span class="week-arrow">▸</span>
+        <span class="week-name">Week 2 · JVM 深入</span>
+        <span class="week-progress">0/7</span>
+      </div>
+      <div class="week-row">
+        <span class="week-arrow">▸</span>
+        <span class="week-name">Week 3 · 数据库</span>
+        <span class="week-progress">0/7</span>
+      </div>
+      <div class="week-row">
+        <span class="week-arrow">▸</span>
+        <span class="week-name">Week 4 · 框架生态</span>
+        <span class="week-progress">0/7</span>
+      </div>
+      <div class="week-row">
+        <span class="week-arrow">▸</span>
+        <span class="week-name">Week 5 · 实战冲刺</span>
+        <span class="week-progress">0/2</span>
+      </div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">工具箱</div>
+      <div class="toolbox-item">
+        <span class="toolbox-icon">🗂️</span>
+        <span>关键词卡片库</span>
+      </div>
+      <div class="toolbox-item">
+        <span class="toolbox-icon">⚠️</span>
+        <span>易错清单</span>
+      </div>
+      <div class="toolbox-item">
+        <span class="toolbox-icon">🔁</span>
+        <span>复习清单</span>
+      </div>
+      <div class="toolbox-item">
+        <span class="toolbox-icon">📊</span>
+        <span>技术栈索引</span>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" id="overlay"></div>
+
+  <!-- 主区 -->
+  <div class="main">
+
+    <header class="header">
+      <div class="header-left">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <span class="header-title">Day 4 · 并发基础</span>
+        <span class="header-breadcrumb">Week 1 <span>/</span> 基础夯实</span>
+      </div>
+      <div class="header-right">
+        <div class="tier-switch">
+          <button class="tier-btn">3h</button>
+          <button class="tier-btn active">5h</button>
+          <button class="tier-btn">6h</button>
+        </div>
+        <span class="streak">🔥 12 天</span>
+        <button class="h-btn">🔁 复习清单</button>
+        <button class="h-btn">⬆ 导出</button>
+        <button class="h-btn">⬇ 导入</button>
+      </div>
+    </header>
+
+    <div class="content-scroll">
+      <div class="content">
+
+        <!-- 问题4修复：阻塞型提示条（有 🔴 项时显示） -->
+        <div class="block-alert">
+          <span class="block-alert-icon">⚠️</span>
+          <span class="block-alert-text">今天有 <span class="block-alert-count">1</span> 个阻塞型知识点需要优先处理</span>
+        </div>
+
+        <!-- Hero -->
+        <header class="h-hero">
+          <div class="h-eyebrow">DAY 4 · 并发基础</div>
+          <h2 class="h-title">
+            <span class="h-title-icon">⚡</span>
+            <span>volatile 与并发可见性</span>
+          </h2>
+          <div class="h-meta">
+            <div class="h-meta-item">
+              <span class="h-meta-label">今日进度</span>
+              <span class="h-meta-value">8 / 15</span>
+            </div>
+            <div class="h-meta-div"></div>
+            <div class="h-meta-item">
+              <span class="h-meta-label">预计用时</span>
+              <span class="h-meta-value">5h</span>
+            </div>
+            <div class="h-meta-div"></div>
+            <div class="h-meta-item">
+              <span class="h-meta-label">已用时</span>
+              <span class="h-meta-value">2.5h</span>
+            </div>
+            <div class="h-meta-div"></div>
+            <div class="h-meta-item h-meta-progress">
+              <span class="h-meta-label">完成率</span>
+              <div class="h-progress-wrap">
+                <div class="h-progress-track">
+                  <div class="h-progress-fill" style="width:53%"></div>
+                </div>
+                <span class="h-progress-text">53%</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- 问题1修复：推荐顺序 复习→重点知识→关键词卡片→算法→面试题库(复述)→模拟题 -->
+
+        <!-- 00 复习（20min） -->
+        <section class="h-section review">
+          <div class="h-section-head">
+            <span class="h-section-num">00</span>
+            <span class="h-section-bar"></span>
+            <h3>复习昨日</h3>
+            <span class="h-section-count">2 项</span>
+            <span class="h-section-time">· 20min</span>
+          </div>
+          <div class="h-list">
+            <div class="review-item">
+              <span class="h-cb checked"></span>
+              <span class="h-text">HashMap 底层结构（数组+链表+红黑树）</span>
+              <span class="review-from">Day 3</span>
+            </div>
+            <div class="review-item">
+              <span class="h-cb"></span>
+              <span class="h-text">HashMap 扩容机制与负载因子</span>
+              <span class="review-from">Day 3</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- 01 重点知识（80min） -->
+        <section class="h-section knowledge">
+          <div class="h-section-head">
+            <span class="h-section-num">01</span>
+            <span class="h-section-bar"></span>
+            <h3>重点知识</h3>
+            <span class="h-section-count">4 项</span>
+            <span class="h-section-time">· 80min</span>
+          </div>
+          <div class="h-list">
+            <div class="h-item done">
+              <span class="h-cb checked"></span>
+              <span class="h-text"><code>volatile</code> 可见性与有序性</span>
+              <button class="h-del">×</button>
+            </div>
+            <div class="h-item">
+              <span class="h-cb"></span>
+              <span class="h-text"><code>volatile</code> 不保证原子性</span>
+              <button class="h-del">×</button>
+            </div>
+            <!-- 问题4修复：阻塞型高亮 -->
+            <div class="h-item blocked">
+              <span class="h-cb"></span>
+              <span class="h-text">JMM 内存模型（主存 vs 工作内存）</span>
+              <span class="h-prio red">🔴 阻塞</span>
+              <button class="h-del">×</button>
+            </div>
+            <div class="h-item done">
+              <span class="h-cb checked"></span>
+              <span class="h-text">happens-before 规则</span>
+              <button class="h-del">×</button>
+            </div>
+          </div>
+          <!-- 问题4修复：添加输入框 + 优先级选择 -->
+          <div class="h-add-row">
+            <input type="text" class="h-add-input" placeholder="+ 添加重点知识..." />
+            <div class="prio-pick">
+              <button class="prio-pick-btn red" title="阻塞型">🔴</button>
+              <button class="prio-pick-btn yellow selected" title="常考">🟡</button>
+              <button class="prio-pick-btn green" title="加分">🟢</button>
+            </div>
+            <button class="h-add-confirm">添加</button>
+          </div>
+        </section>
+
+        <!-- 02 关键词卡片（25min）—— 问题3修复：翻转 + 自评 -->
+        <section class="h-section card">
+          <div class="h-section-head">
+            <span class="h-section-num">02</span>
+            <span class="h-section-bar"></span>
+            <h3>关键词卡片</h3>
+            <span class="h-section-count">4 张</span>
+            <span class="h-section-time">· 25min</span>
+          </div>
+          <div class="card-grid">
+            <div class="keyword-card" onclick="this.classList.toggle('flipped')">
+              <div class="card-inner">
+                <div class="card-face card-front">
+                  <div class="keyword-card-title"><code>volatile</code></div>
+                  <div class="keyword-card-hint">点击翻转，说出它的三大特性</div>
+                  <span class="keyword-card-flip">▸ 翻转自测</span>
+                </div>
+                <div class="card-face card-back">
+                  <div class="card-back-title">答案</div>
+                  <div class="card-back-answer">可见性 ✓ 有序性 ✓ 原子性 ✗</div>
+                  <div class="card-eval">
+                    <button class="card-eval-btn pass" onclick="event.stopPropagation()">✅</button>
+                    <button class="card-eval-btn fail" onclick="event.stopPropagation()">❌</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="keyword-card" onclick="this.classList.toggle('flipped')">
+              <div class="card-inner">
+                <div class="card-face card-front">
+                  <div class="keyword-card-title"><code>happens-before</code></div>
+                  <div class="keyword-card-hint">点击翻转，说出它的含义</div>
+                  <span class="keyword-card-flip">▸ 翻转自测</span>
+                </div>
+                <div class="card-face card-back">
+                  <div class="card-back-title">答案</div>
+                  <div class="card-back-answer">前操作结果对后操作可见的规则</div>
+                  <div class="card-eval">
+                    <button class="card-eval-btn pass" onclick="event.stopPropagation()">✅</button>
+                    <button class="card-eval-btn fail" onclick="event.stopPropagation()">❌</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="keyword-card" onclick="this.classList.toggle('flipped')">
+              <div class="card-inner">
+                <div class="card-face card-front">
+                  <div class="keyword-card-title">JMM</div>
+                  <div class="keyword-card-hint">点击翻转，解释 Java 内存模型</div>
+                  <span class="keyword-card-flip">▸ 翻转自测</span>
+                </div>
+                <div class="card-face card-back">
+                  <div class="card-back-title">答案</div>
+                  <div class="card-back-answer">规范多线程内存访问，主存 vs 工作内存</div>
+                  <div class="card-eval">
+                    <button class="card-eval-btn pass" onclick="event.stopPropagation()">✅</button>
+                    <button class="card-eval-btn fail" onclick="event.stopPropagation()">❌</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="keyword-card" onclick="this.classList.toggle('flipped')">
+              <div class="card-inner">
+                <div class="card-face card-front">
+                  <div class="keyword-card-title">内存屏障</div>
+                  <div class="keyword-card-hint">点击翻转，说出四种屏障</div>
+                  <span class="keyword-card-flip">▸ 翻转自测</span>
+                </div>
+                <div class="card-face card-back">
+                  <div class="card-back-title">答案</div>
+                  <div class="card-back-answer">LoadLoad / StoreStore / LoadStore / StoreLoad</div>
+                  <div class="card-eval">
+                    <button class="card-eval-btn pass" onclick="event.stopPropagation()">✅</button>
+                    <button class="card-eval-btn fail" onclick="event.stopPropagation()">❌</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 03 算法练习（20min） -->
+        <section class="h-section algo">
+          <div class="h-section-head">
+            <span class="h-section-num">03</span>
+            <span class="h-section-bar"></span>
+            <h3>算法练习</h3>
+            <span class="h-section-count">1 题</span>
+            <span class="h-section-time">· 20min</span>
+          </div>
+          <div class="h-list">
+            <div class="algo-item">
+              <span class="h-cb"></span>
+              <span class="algo-name">LRU 缓存（双向链表 + 哈希表）</span>
+              <a href="#" class="algo-lc">LC 146</a>
+            </div>
+          </div>
+        </section>
+
+        <!-- 04 面试题库 / 复述（15min）—— 琥珀突出 -->
+        <section class="h-section featured">
+          <div class="h-section-head">
+            <span class="h-section-num">04</span>
+            <span class="h-section-bar"></span>
+            <h3>面试题库 · 口述练习</h3>
+            <span class="h-section-count">8 题</span>
+            <span class="h-section-time">· 15min</span>
+          </div>
+          <div style="font-size:11px;color:var(--h-ink-muted);margin-top:-6px;margin-bottom:10px;">闭眼讲一遍，讲不清楚的标记 ❌</div>
+
+          <div class="h-filter">
+            <span class="h-filter-badge red">🔴 必考 3</span>
+            <span class="h-filter-badge yellow">🟡 常考 3</span>
+            <span class="h-filter-badge green">🟢 偶尔考 2</span>
+          </div>
+
+          <div class="h-list">
+            <div class="h-item h-q-item both">
+              <span class="h-cb"></span>
+              <span class="h-text"><code>volatile</code> 底层原理（内存屏障）</span>
+              <span class="h-prio red">🔴 必考</span>
+              <button class="h-del">×</button>
+            </div>
+            <div class="h-item h-q-item both">
+              <span class="h-cb"></span>
+              <span class="h-text">JMM 与 happens-before 详解</span>
+              <span class="h-prio red">🔴 必考</span>
+              <button class="h-del">×</button>
+            </div>
+            <div class="h-item h-q-item md-only">
+              <span class="h-cb"></span>
+              <span class="h-text">指令重排与内存屏障</span>
+              <span class="h-prio red">🔴 必考</span>
+              <button class="h-del">×</button>
+            </div>
+            <div class="h-item h-q-item both">
+              <span class="h-cb"></span>
+              <span class="h-text">双重检查锁（DCL）单例</span>
+              <span class="h-prio yellow">🟡 常考</span>
+              <button class="h-del">×</button>
+            </div>
+            <div class="h-item h-q-item both done">
+              <span class="h-cb checked"></span>
+              <span class="h-text"><code>volatile</code> vs <code>Atomic</code> 类</span>
+              <span class="h-prio yellow">🟡 常考</span>
+              <button class="h-del">×</button>
+            </div>
+            <div class="h-item h-q-item pdf-only">
+              <span class="h-cb"></span>
+              <span class="h-text">缓存一致性协议 MESI</span>
+              <span class="h-prio green">🟢 偶尔考</span>
+              <button class="h-del">×</button>
+            </div>
+          </div>
+          <div class="h-add-row">
+            <input type="text" class="h-add-input" placeholder="+ 添加面试题..." />
+            <div class="prio-pick">
+              <button class="prio-pick-btn red">🔴</button>
+              <button class="prio-pick-btn yellow selected">🟡</button>
+              <button class="prio-pick-btn green">🟢</button>
+            </div>
+            <button class="h-add-confirm">添加</button>
+          </div>
+        </section>
+
+        <!-- 05 模拟题（20min）—— 问题2修复：折叠参考要点 -->
+        <section class="h-section mock">
+          <div class="h-section-head">
+            <span class="h-section-num">05</span>
+            <span class="h-section-bar"></span>
+            <h3>模拟题</h3>
+            <span class="h-section-count">3 题</span>
+            <span class="h-section-time">· 20min</span>
+          </div>
+          <div class="h-list">
+            <div class="h-item">
+              <span class="h-cb"></span>
+              <span class="h-text"><code>volatile</code> 能保证线程安全吗？为什么？</span>
+              <span class="mock-timer yellow">⏱ 2min</span>
+              <button class="h-del">×</button>
+            </div>
+            <!-- 折叠参考要点 -->
+            <details class="mock-tips">
+              <summary>参考要点</summary>
+              <div class="mock-tips-label">答题思路</div>
+              可见性 ✓ 有序性 ✓ 原子性 ✗ → 不能单独保证线程安全。<br>
+              需配合 <code>synchronized</code> 或 <code>Atomic</code> 类保证原子性。
+            </details>
+
+            <div class="h-item">
+              <span class="h-cb"></span>
+              <span class="h-text">解释指令重排及 <code>volatile</code> 的禁止重排原理</span>
+              <span class="mock-timer red">⏱ 3min</span>
+              <button class="h-del">×</button>
+            </div>
+            <details class="mock-tips">
+              <summary>参考要点</summary>
+              <div class="mock-tips-label">答题思路</div>
+              编译器/CPU 可能重排指令优化性能。<code>volatile</code> 通过插入内存屏障（StoreStore + StoreLoad）禁止重排。
+            </details>
+
+            <div class="h-item done">
+              <span class="h-cb checked"></span>
+              <span class="h-text">双重检查锁单例为什么需要 <code>volatile</code>？</span>
+              <span class="mock-timer yellow">⏱ 2min</span>
+              <button class="h-del">×</button>
+            </div>
+            <details class="mock-tips" open>
+              <summary>参考要点（已展开）</summary>
+              <div class="mock-tips-label">答题思路</div>
+              new 对象非原子操作（分配内存→初始化→赋值），可能重排为"分配→赋值→初始化"，此时其他线程拿到未初始化对象。<code>volatile</code> 禁止重排。
+            </details>
+          </div>
+          <div class="h-add-row">
+            <input type="text" class="h-add-input" placeholder="+ 添加模拟题..." />
+            <button class="h-add-confirm">添加</button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 问题6修复：抽屉菜单
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  const menuToggle = document.getElementById('menuToggle');
+
+  menuToggle?.addEventListener('click', () => {
+    sidebar.classList.add('open');
+  });
+  overlay?.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+  });
+
+  // 问题4修复：优先级选择
+  document.querySelectorAll('.prio-pick').forEach(group => {
+    group.querySelectorAll('.prio-pick-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        group.querySelectorAll('.prio-pick-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+      });
+    });
+  });
+
+  // 问题3修复：自评按钮反馈 + 状态持久化
+  document.querySelectorAll('.card-eval-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const card = btn.closest('.keyword-card');
+      const front = card.querySelector('.card-front');
+      if (btn.classList.contains('fail')) {
+        // ❌ 持久化：卡片保持红色边框 + 半透明，标记为不熟
+        card.querySelector('.card-back').style.borderColor = '#dc2626';
+        card.querySelector('.card-back').style.background = '#fef2f2';
+        front.style.borderColor = '#dc2626';
+        front.style.opacity = '0.6';
+        card.dataset.status = 'fail';
+        setTimeout(() => { card.classList.remove('flipped'); }, 500);
+      } else {
+        // ✅ 持久化：卡片保持绿色边框，标记为已掌握
+        card.querySelector('.card-back').style.borderColor = '#22c55e';
+        card.querySelector('.card-back').style.background = '#f0fdf4';
+        front.style.borderColor = '#22c55e';
+        front.style.opacity = '1';
+        card.dataset.status = 'pass';
+        setTimeout(() => { card.classList.remove('flipped'); }, 500);
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
