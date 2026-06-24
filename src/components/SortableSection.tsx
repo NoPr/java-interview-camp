@@ -24,6 +24,7 @@ function SortableItem({ id, children }: { id: string; children: ReactNode }) {
         attributes,
         listeners,
         setNodeRef,
+        setActivatorNodeRef,
         transform,
         transition,
         isDragging,
@@ -40,6 +41,7 @@ function SortableItem({ id, children }: { id: string; children: ReactNode }) {
         <div ref={setNodeRef} style={style} className={`content-item sortable-item ${isDragging ? 'dragging' : ''}`}>
             <button
                 type="button"
+                ref={setActivatorNodeRef}
                 className="drag-handle"
                 aria-label="拖动排序"
                 {...attributes}
@@ -62,7 +64,7 @@ interface SortableSectionProps {
 // 可排序区块：提供 DndContext + SortableContext
 export function SortableSection({ items, onReorder }: SortableSectionProps) {
     const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
     );
 

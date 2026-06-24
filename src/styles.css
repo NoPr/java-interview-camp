@@ -1567,6 +1567,9 @@ body {
 
 .techstack-section .content-item:hover {
   background: var(--ed-bg-elevated);
+}
+
+.techstack-section .content-item:not(.sortable-item):hover {
   transform: translateX(2px);
 }
 
@@ -2125,6 +2128,11 @@ body {
 /* ===== 拖拽排序样式 ===== */
 /* 注：.content-item 的 flex 布局已由 .techstack-section .content-item 提供，
    此处仅补充手柄与拖拽态，避免特异性冲突 */
+
+.sortable-item {
+    touch-action: none;
+    user-select: none;
+}
 
 .drag-handle {
     flex: 0 0 20px;
