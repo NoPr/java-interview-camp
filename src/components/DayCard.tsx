@@ -3,6 +3,9 @@ import { PLAN } from '../data/plan';
 import { useAppState } from '../hooks/useAppState';
 import type { ContentType, CustomItem, DayData, QuestionPriority } from '../types';
 import { getQuestionPriority } from '../utils/questionMatcher';
+import { SortableSection } from './SortableSection';
+import { mergeWithOrder } from '../utils/mergeWithOrder';
+import type { OrderableItem } from '../utils/mergeWithOrder';
 
 // 区块变体类型（Editorial Hybrid 单色系）
 type BlockVariant = 'review' | 'knowledge' | 'mustknow' | 'card' | 'algo' | 'interview' | 'mock';
@@ -343,51 +346,71 @@ export default function DayCard() {
             .map((text, idx) => ({ text, idx }))
             .filter(({ idx }) => !hidden.includes(idx));
 
+        // 合并预置与自定义为 OrderableItem[]，支持拖拽排序
+        const presetItems: OrderableItem[] = visiblePreset.map(({ text, idx }) => {
+            const taskKey = `${currentDay}-${type}-${idx}`;
+            return {
+                id: taskKey,
+                node: (
+                    <TaskItem
+                        checked={!!state.tasks[taskKey]}
+                        onClick={() => dispatch({ type: 'TOGGLE_TASK', key: taskKey })}
+                        onDelete={() =>
+                            dispatch({
+                                type: 'HIDE_PRESET',
+                                day: currentDay,
+                                contentType: type,
+                                index: idx,
+                            })
+                        }
+                    >
+                        {text}
+                    </TaskItem>
+                ),
+            };
+        });
+        const customItems: OrderableItem[] = custom.map((item) => {
+            const taskKey = `custom-${item.id}`;
+            return {
+                id: taskKey,
+                node: (
+                    <TaskItem
+                        checked={!!state.tasks[taskKey]}
+                        isCustom
+                        onClick={() => dispatch({ type: 'TOGGLE_TASK', key: taskKey })}
+                        onDelete={() =>
+                            dispatch({
+                                type: 'DELETE_CUSTOM',
+                                day: currentDay,
+                                contentType: type,
+                                id: item.id,
+                            })
+                        }
+                    >
+                        {item.content}
+                    </TaskItem>
+                ),
+            };
+        });
+        const mergedItems = mergeWithOrder(
+            [...presetItems, ...customItems],
+            state.contentOrder[key],
+        );
+
         return (
             <Block variant={variant} title={title}>
                 <div className="task-list">
-                    {visiblePreset.map(({ text, idx }) => (
-                        <TaskItem
-                            checked={!!state.tasks[`${currentDay}-${type}-${idx}`]}
-                            key={`p-${idx}`}
-                            onClick={() =>
-                                dispatch({
-                                    type: 'TOGGLE_TASK',
-                                    key: `${currentDay}-${type}-${idx}`,
-                                })
-                            }
-                            onDelete={() =>
-                                dispatch({
-                                    type: 'HIDE_PRESET',
-                                    day: currentDay,
-                                    contentType: type,
-                                    index: idx,
-                                })
-                            }
-                        >
-                            {text}
-                        </TaskItem>
-                    ))}
-                    {custom.map((item) => (
-                        <TaskItem
-                            checked={!!state.tasks[`custom-${item.id}`]}
-                            key={`c-${item.id}`}
-                            isCustom
-                            onClick={() =>
-                                dispatch({ type: 'TOGGLE_TASK', key: `custom-${item.id}` })
-                            }
-                            onDelete={() =>
-                                dispatch({
-                                    type: 'DELETE_CUSTOM',
-                                    day: currentDay,
-                                    contentType: type,
-                                    id: item.id,
-                                })
-                            }
-                        >
-                            {item.content}
-                        </TaskItem>
-                    ))}
+                    <SortableSection
+                        items={mergedItems}
+                        onReorder={(order) =>
+                            dispatch({
+                                type: 'REORDER_CONTENT',
+                                day: currentDay,
+                                contentType: type,
+                                order,
+                            })
+                        }
+                    />
                 </div>
                 <AddRestoreControls
                     type={type}
@@ -419,120 +442,138 @@ export default function DayCard() {
             .map((m, idx) => ({ m, idx }))
             .filter(({ idx }) => !hidden.includes(idx));
 
+        // 合并预置与自定义 mock 为 OrderableItem[]，支持拖拽排序
+        // 注意：mock 预置项 id 用 `${currentDay}-${idx}`（与勾选 key 一致，无 type 中段）
+        const presetItems: OrderableItem[] = visiblePreset.map(({ m, idx }) => {
+            const mockKey = `${currentDay}-${idx}`;
+            const checked = !!state.mock[mockKey];
+            const tipsKey = `${currentDay}-${idx}`;
+            const isExpanded = !!state.mockTipsExpanded?.[tipsKey];
+            const priority = getQuestionPriority(m.q);
+            return {
+                id: mockKey,
+                node: (
+                    <div className={`mock-item content-item ${checked ? 'done' : ''}`}>
+                        <div className="mock-top">
+                            <div
+                                className={`checkbox ${checked ? 'checked' : ''}`}
+                                onClick={() =>
+                                    dispatch({ type: 'TOGGLE_MOCK', key: mockKey })
+                                }
+                            />
+                            <div className="mock-question">
+                                {m.q}
+                                <PriorityBadge priority={priority} />
+                            </div>
+                            <span className="ed-mock-timer">
+                                ⏱ {idx < 2 ? '2min' : '3min'}
+                            </span>
+                            <button
+                                className="delete-btn"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    dispatch({
+                                        type: 'HIDE_PRESET',
+                                        day: currentDay,
+                                        contentType: type,
+                                        index: idx,
+                                    });
+                                }}
+                                title="删除"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        {m.tips && (
+                            <details
+                                className="ed-mock-tips"
+                                open={isExpanded}
+                                onToggle={() =>
+                                    dispatch({
+                                        type: 'TOGGLE_MOCK_TIPS',
+                                        day: currentDay,
+                                        index: idx,
+                                    })
+                                }
+                            >
+                                <summary>参考要点</summary>
+                                <p>{m.tips}</p>
+                            </details>
+                        )}
+                    </div>
+                ),
+            };
+        });
+        const customItems: OrderableItem[] = custom.map((item) => {
+            const mockKey = `custom-${item.id}`;
+            const checked = !!state.mock[mockKey];
+            const expanded = expandedMock.has(`c-${item.id}`);
+            const priority = getQuestionPriority(item.q || '');
+            return {
+                id: mockKey,
+                node: (
+                    <div className={`mock-item content-item custom-item ${checked ? 'done' : ''}`}>
+                        <div className="mock-top">
+                            <div
+                                className={`checkbox ${checked ? 'checked' : ''}`}
+                                onClick={() =>
+                                    dispatch({ type: 'TOGGLE_MOCK', key: mockKey })
+                                }
+                            />
+                            <div className="mock-question">
+                                {item.q}
+                                <PriorityBadge priority={priority} />
+                            </div>
+                            <span className="ed-mock-timer">⏱ 3min</span>
+                            <button
+                                className="delete-btn"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    dispatch({
+                                        type: 'DELETE_CUSTOM',
+                                        day: currentDay,
+                                        contentType: type,
+                                        id: item.id,
+                                    });
+                                }}
+                                title="删除"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        {item.tips && (
+                            <details
+                                className="ed-mock-tips"
+                                open={expanded}
+                                onToggle={() => toggleMockExpand(`c-${item.id}`)}
+                            >
+                                <summary>参考要点</summary>
+                                <p>{item.tips}</p>
+                            </details>
+                        )}
+                    </div>
+                ),
+            };
+        });
+        const mergedItems = mergeWithOrder(
+            [...presetItems, ...customItems],
+            state.contentOrder[key],
+        );
+
         return (
             <Block variant="mock" num="05" title="模拟题" count="20min">
                 <div className="task-list">
-                    {visiblePreset.map(({ m, idx }) => {
-                        const mockKey = `${currentDay}-${idx}`;
-                        const checked = !!state.mock[mockKey];
-                        const tipsKey = `${currentDay}-${idx}`;
-                        const isExpanded = !!state.mockTipsExpanded?.[tipsKey];
-                        const priority = getQuestionPriority(m.q);
-                        return (
-                            <div
-                                className={`mock-item content-item ${checked ? 'done' : ''}`}
-                                key={`p-${idx}`}
-                            >
-                                <div className="mock-top">
-                                    <div
-                                        className={`checkbox ${checked ? 'checked' : ''}`}
-                                        onClick={() =>
-                                            dispatch({ type: 'TOGGLE_MOCK', key: mockKey })
-                                        }
-                                    />
-                                    <div className="mock-question">
-                                        {m.q}
-                                        <PriorityBadge priority={priority} />
-                                    </div>
-                                    <span className="ed-mock-timer">
-                                        ⏱ {idx < 2 ? '2min' : '3min'}
-                                    </span>
-                                    <button
-                                        className="delete-btn"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            dispatch({
-                                                type: 'HIDE_PRESET',
-                                                day: currentDay,
-                                                contentType: type,
-                                                index: idx,
-                                            });
-                                        }}
-                                        title="删除"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                                {m.tips && (
-                                    <details
-                                        className="ed-mock-tips"
-                                        open={isExpanded}
-                                        onToggle={() =>
-                                            dispatch({
-                                                type: 'TOGGLE_MOCK_TIPS',
-                                                day: currentDay,
-                                                index: idx,
-                                            })
-                                        }
-                                    >
-                                        <summary>参考要点</summary>
-                                        <p>{m.tips}</p>
-                                    </details>
-                                )}
-                            </div>
-                        );
-                    })}
-                    {custom.map((item) => {
-                        const mockKey = `custom-${item.id}`;
-                        const checked = !!state.mock[mockKey];
-                        const expanded = expandedMock.has(`c-${item.id}`);
-                        const priority = getQuestionPriority(item.q || '');
-                        return (
-                            <div
-                                className={`mock-item content-item custom-item ${checked ? 'done' : ''}`}
-                                key={`c-${item.id}`}
-                            >
-                                <div className="mock-top">
-                                    <div
-                                        className={`checkbox ${checked ? 'checked' : ''}`}
-                                        onClick={() =>
-                                            dispatch({ type: 'TOGGLE_MOCK', key: mockKey })
-                                        }
-                                    />
-                                    <div className="mock-question">
-                                        {item.q}
-                                        <PriorityBadge priority={priority} />
-                                    </div>
-                                    <span className="ed-mock-timer">⏱ 3min</span>
-                                    <button
-                                        className="delete-btn"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            dispatch({
-                                                type: 'DELETE_CUSTOM',
-                                                day: currentDay,
-                                                contentType: type,
-                                                id: item.id,
-                                            });
-                                        }}
-                                        title="删除"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                                {item.tips && (
-                                    <details
-                                        className="ed-mock-tips"
-                                        open={expanded}
-                                        onToggle={() => toggleMockExpand(`c-${item.id}`)}
-                                    >
-                                        <summary>参考要点</summary>
-                                        <p>{item.tips}</p>
-                                    </details>
-                                )}
-                            </div>
-                        );
-                    })}
+                    <SortableSection
+                        items={mergedItems}
+                        onReorder={(order) =>
+                            dispatch({
+                                type: 'REORDER_CONTENT',
+                                day: currentDay,
+                                contentType: type,
+                                order,
+                            })
+                        }
+                    />
                 </div>
                 <AddRestoreControls
                     type={type}
