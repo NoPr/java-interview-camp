@@ -530,6 +530,32 @@ export function TechStackView() {
                                     }
                                 />
                                 <span className="ed-question-text">{item.content}</span>
+                                {state.weakReason[qid] && (
+                                    <span className="ed-weak-marks">
+                                        <span className="ed-weak-reason">
+                                            {({ concept: '📖', memory: '🔄', articulate: '🗣', confuse: '🔀', apply: '✏️' } as const)[state.weakReason[qid]]}
+                                        </span>
+                                        {state.reviewUrgency[qid] && (
+                                            <span className="ed-weak-urgency">
+                                                {({ high: '🔴', mid: '🟡', low: '⚪' } as const)[state.reviewUrgency[qid]!]}
+                                            </span>
+                                        )}
+                                    </span>
+                                )}
+                                <button
+                                    className="ed-weak-btn"
+                                    title="遇到不牢固"
+                                    onClick={() =>
+                                        dispatch({
+                                            type: 'OPEN_WEAK_DIALOG',
+                                            key: qid,
+                                            text: item.content,
+                                            priority: status.priority,
+                                        })
+                                    }
+                                >
+                                    💡
+                                </button>
                                 <select
                                     className="priority-select"
                                     value={status.priority}
