@@ -1917,6 +1917,146 @@ body {
     font-size: 14px;
     transition: var(--ed-transition);
 }
+
+/* ===================== 决策引导弹窗 ===================== */
+.ed-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: ed-fade-up 150ms ease;
+}
+
+.ed-dialog {
+    background: var(--ed-canvas, #faf9f6);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    padding: 24px;
+    max-width: 480px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.ed-dialog-title {
+    font-family: var(--ed-serif, 'Noto Serif SC', serif);
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    color: var(--ed-ink, #1c1c1a);
+}
+
+.ed-dialog-text {
+    font-size: 14px;
+    color: var(--ed-ink-soft, #4a4a45);
+    margin: 0 0 16px;
+    line-height: 1.5;
+}
+
+.ed-dialog-section {
+    margin-bottom: 16px;
+}
+
+.ed-dialog-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ed-ink, #1c1c1a);
+    margin-bottom: 8px;
+}
+
+.ed-dialog-options,
+.ed-dialog-reasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.ed-dialog-radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border: 1px solid var(--ed-border, #e6e3da);
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 150ms ease;
+}
+
+.ed-dialog-radio.checked {
+    border-color: var(--ed-brand-deep, #14532d);
+    background: var(--ed-mist, #f4f2ec);
+}
+
+.ed-dialog-radio input {
+    margin: 0;
+}
+
+.ed-dialog-suggestion {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ed-amber, #d97706);
+    font-weight: 500;
+    padding: 8px;
+    margin: 12px 0;
+    border-top: 1px dashed var(--ed-border, #e6e3da);
+    border-bottom: 1px dashed var(--ed-border, #e6e3da);
+}
+
+.ed-dialog-actions {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.ed-dialog-btn {
+    flex: 1;
+    padding: 8px 16px;
+    border: 1px solid var(--ed-border, #e6e3da);
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 150ms ease;
+    background: transparent;
+    color: var(--ed-ink, #1c1c1a);
+}
+
+.ed-dialog-btn-primary {
+    background: var(--ed-brand-deep, #14532d);
+    color: white;
+    border-color: var(--ed-brand-deep, #14532d);
+}
+
+.ed-dialog-btn-secondary {
+    background: transparent;
+    color: var(--ed-ink-soft, #4a4a45);
+}
+
+.ed-dialog-btn-tertiary {
+    font-size: 12px;
+    color: var(--ed-ink-muted, #8a8a82);
+    text-decoration: underline;
+    border: none;
+    padding: 4px;
+}
+
+.ed-dialog-answer {
+    padding: 12px;
+    background: var(--ed-mist, #f4f2ec);
+    border-radius: 8px;
+    margin: 12px 0;
+}
+
+.ed-dialog-hint {
+    font-size: 13px;
+    color: var(--ed-ink-soft, #4a4a45);
+    margin: 4px 0;
+    line-height: 1.5;
+}
 .ed-card-eval:hover {
     border-color: var(--ed-ink-faint);
 }
