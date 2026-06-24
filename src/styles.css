@@ -2314,3 +2314,137 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     background: var(--bg-elevated, #fff);
 }
+
+/* ===================== 复习队列 ===================== */
+.ed-review-queue {
+    padding: 12px;
+}
+
+.ed-review-queue-empty {
+    text-align: center;
+    padding: 24px;
+}
+
+.ed-review-queue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.ed-review-queue-title {
+    font-family: var(--ed-serif, 'Noto Serif SC', serif);
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--ed-ink, #1c1c1a);
+}
+
+.ed-review-queue-btn {
+    padding: 4px 12px;
+    border: 1px solid var(--ed-border, #e6e3da);
+    border-radius: 6px;
+    background: transparent;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--ed-ink-soft, #4a4a45);
+}
+
+.ed-review-queue-btn:hover {
+    background: var(--ed-mist, #f4f2ec);
+}
+
+.ed-review-group {
+    margin-bottom: 16px;
+}
+
+.ed-review-group-header {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--ed-border-soft, #f0ede4);
+    margin-bottom: 8px;
+}
+
+.ed-review-group--high .ed-review-group-header {
+    color: var(--ed-red, #dc2626);
+}
+
+.ed-review-group--mid .ed-review-group-header {
+    color: var(--ed-amber, #d97706);
+}
+
+.ed-review-group--low .ed-review-group-header {
+    color: var(--ed-ink-muted, #8a8a82);
+}
+
+.ed-review-item {
+    padding: 10px 12px;
+    border: 1px solid var(--ed-border-soft, #f0ede4);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background: var(--ed-canvas, #faf9f6);
+}
+
+.ed-review-item-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.ed-review-reason-icon {
+    font-size: 14px;
+}
+
+.ed-review-item-text {
+    font-size: 13px;
+    color: var(--ed-ink, #1c1c1a);
+    flex: 1;
+    min-width: 0;
+}
+
+.ed-review-day-tag {
+    padding: 2px 8px;
+    border: 1px solid var(--ed-border, #e6e3da);
+    border-radius: 4px;
+    background: transparent;
+    font-size: 11px;
+    cursor: pointer;
+    color: var(--ed-ink-muted, #8a8a82);
+}
+
+.ed-review-day-tag:hover {
+    background: var(--ed-mist, #f4f2ec);
+    color: var(--ed-brand-deep, #14532d);
+}
+
+.ed-review-advice {
+    font-size: 12px;
+    color: var(--ed-ink-muted, #8a8a82);
+    margin: 4px 0;
+    padding-left: 22px;
+}
+
+.ed-review-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.ed-review-mastery {
+    font-size: 12px;
+    color: var(--ed-ink-soft, #4a4a45);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ed-review-mastery select {
+    padding: 2px 6px;
+    border: 1px solid var(--ed-border, #e6e3da);
+    border-radius: 4px;
+    font-size: 12px;
+    background: var(--ed-canvas, #faf9f6);
+}
