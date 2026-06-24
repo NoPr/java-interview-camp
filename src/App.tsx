@@ -3,6 +3,7 @@ import Header from './components/Header';
 import Overview from './components/Overview';
 import Sidebar from './components/Sidebar';
 import { TechStackView } from './components/TechStackView';
+import { WeakDecisionDialog } from './components/WeakDecisionDialog';
 import { AppStateProvider, useAppState } from './hooks/useAppState';
 
 // 主内容区：根据 currentView 切换 Overview / DayCard / TechStackView
@@ -30,6 +31,7 @@ function AppLayout() {
                 <Header />
                 <MainContent />
             </div>
+            <WeakDecisionDialog />
         </div>
     );
 }
