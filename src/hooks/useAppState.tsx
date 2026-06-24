@@ -87,6 +87,12 @@ export const initialState: AppState = {
     techStackFilter: 'all' as const,
     sidebarOpen: false,
     contentOrder: {},
+    // 不牢固决策与复习队列
+    weakReason: {},
+    masteryLevel: {},
+    reviewUrgency: {},
+    weakMeta: {},
+    dialogState: null,
 };
 
 // ===================== Reducer =====================
@@ -301,6 +307,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
                 if (!migratedState.techStackFilter) migratedState.techStackFilter = 'all';
                 if (migratedState.sidebarOpen === undefined) migratedState.sidebarOpen = false;
                 if (!migratedState.contentOrder) migratedState.contentOrder = {};
+                if (!migratedState.weakReason) migratedState.weakReason = {};
+                if (!migratedState.masteryLevel) migratedState.masteryLevel = {};
+                if (!migratedState.reviewUrgency) migratedState.reviewUrgency = {};
+                if (!migratedState.weakMeta) migratedState.weakMeta = {};
+                if (!migratedState.dialogState) migratedState.dialogState = null;
                 dispatch({ type: 'LOAD_STATE', state: migratedState });
             }
         });

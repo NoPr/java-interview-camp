@@ -110,4 +110,51 @@ export interface AppState {
   // 技术栈级用 `techStack-${stackId}-${type}`
   // value 为排序后的条目 id 数组（存全量顺序，含被隐藏/被过滤的条目）
   contentOrder: Record<string, string[]>;
+    // ===================== 不牢固决策与复习队列 =====================
+    // 不掌握原因：key 为 contentKey/questionId
+    weakReason: Record<string, WeakReason>;
+    // 掌握程度：key 同上
+    masteryLevel: Record<string, MasteryLevel>;
+    // 复习紧迫度：key 同上（仅"跳过+加入复习"的题有值）
+    reviewUrgency: Record<string, ReviewUrgency>;
+    // 标记元信息：key 同上，记录标记时的 day 和 text
+    weakMeta: Record<string, WeakMeta>;
+    // 决策弹窗状态
+    dialogState: DialogState | null;
+}
+
+// ===================== 不牢固决策与复习队列 =====================
+
+// 不掌握原因（决定复习方式）
+export type WeakReason = 'concept' | 'memory' | 'articulate' | 'confuse' | 'apply';
+
+// 掌握程度（决定复习强度）
+export type MasteryLevel = 'mastered' | 'vague' | 'clueless' | 'unknown';
+
+// 复习紧迫度（系统算，决定展示优先级）
+export type ReviewUrgency = 'high' | 'mid' | 'low';
+
+// 决策弹窗的输入
+export interface WeakDecisionInput {
+    isPrerequisite: 'yes' | 'no' | 'uncertain';
+    mastery: 'clueless' | 'vague';
+    reason: WeakReason;
+    priority: QuestionPriority;
+    decision: 'grind' | 'skip';
+    day: number;   // 标记时的 currentDay
+    text: string;  // 题目/知识点文本
+}
+
+// 决策弹窗状态（全局挂载，避免 prop drilling）
+export interface DialogState {
+    open: boolean;
+    key: string;
+    text: string;
+    priority: QuestionPriority;
+}
+
+// 标记元信息（记录标记时的 Day 和文本，供 ReviewQueue 展示）
+export interface WeakMeta {
+    day: number;
+    text: string;
 }
