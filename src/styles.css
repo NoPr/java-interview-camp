@@ -2448,3 +2448,38 @@ body {
     font-size: 12px;
     background: var(--ed-canvas, #faf9f6);
 }
+
+/* ===================== 不牢固按钮与标记展示 ===================== */
+.ed-weak-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    opacity: 0.4;
+    transition: opacity 150ms ease;
+    padding: 0;
+    border-radius: 4px;
+}
+
+.ed-weak-btn:hover {
+    opacity: 1;
+    background: var(--ed-mist, #f4f2ec);
+}
+
+.ed-weak-marks {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: 4px;
+    font-size: 11px;
+}
+
+.ed-weak-reason,
+.ed-weak-urgency {
+    display: inline-flex;
+}

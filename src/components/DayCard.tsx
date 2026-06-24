@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { PLAN } from '../data/plan';
 import { useAppState } from '../hooks/useAppState';
-import type { ContentType, CustomItem, DayData, QuestionPriority } from '../types';
+import type { ContentType, CustomItem, DayData, QuestionPriority, WeakReason, MasteryLevel } from '../types';
 import { getQuestionPriority } from '../utils/questionMatcher';
+import { ReviewQueue } from './ReviewQueue';
 import { SortableSection } from './SortableSection';
 import { mergeWithOrder } from '../utils/mergeWithOrder';
 import type { OrderableItem } from '../utils/mergeWithOrder';
@@ -332,6 +333,35 @@ export default function DayCard() {
         );
     };
 
+    // 渲染"💡遇到不牢固"按钮
+    const renderWeakButton = (key: string, text: string, priority: QuestionPriority = 'yellow') => (
+        <button
+            className="ed-weak-btn"
+            title="遇到不牢固"
+            onClick={() => dispatch({ type: 'OPEN_WEAK_DIALOG', key, text, priority })}
+        >
+            💡
+        </button>
+    );
+
+    // 渲染标记展示（原因图标 + 程度边框 + 紧迫角标）
+    const renderWeakMarks = (key: string) => {
+        const reason: WeakReason | undefined = state.weakReason[key];
+        const mastery: MasteryLevel | undefined = state.masteryLevel[key];
+        const urgency = state.reviewUrgency[key];
+        if (!reason && !mastery && !urgency) return null;
+        const reasonIcons: Record<string, string> = {
+            concept: '📖', memory: '🔄', articulate: '🗣', confuse: '🔀', apply: '✏️',
+        };
+        const urgencyIcons: Record<string, string> = { high: '🔴', mid: '🟡', low: '⚪' };
+        return (
+            <span className="ed-weak-marks">
+                {reason && <span className="ed-weak-reason">{reasonIcons[reason]}</span>}
+                {urgency && <span className="ed-weak-urgency">{urgencyIcons[urgency]}</span>}
+            </span>
+        );
+    };
+
     // 渲染字符串数组类型区块（knowledge/mustKnow/tier5/tier6）
     const renderStrBlock = (
         variant: BlockVariant,
@@ -365,6 +395,8 @@ export default function DayCard() {
                         }
                     >
                         {text}
+                        {renderWeakButton(taskKey, text)}
+                        {renderWeakMarks(taskKey)}
                     </TaskItem>
                 ),
             };
@@ -388,6 +420,8 @@ export default function DayCard() {
                         }
                     >
                         {item.content}
+                        {renderWeakButton(taskKey, item.content)}
+                        {renderWeakMarks(taskKey)}
                     </TaskItem>
                 ),
             };
@@ -784,24 +818,29 @@ export default function DayCard() {
 
             {/* 复盘日：显示 tasks 而不是 knowledge */}
             {day.isReview ? (
-                <Block variant="algo" num="03" title="复盘任务" count={`${stats.done}/${stats.total}`}>
-                    <div className="task-list">
-                        {day.tasks?.map((task, idx) => (
-                            <TaskItem
-                                checked={!!state.tasks[`${currentDay}-tasks-${idx}`]}
-                                key={idx}
-                                onClick={() =>
-                                    dispatch({
-                                        type: 'TOGGLE_TASK',
-                                        key: `${currentDay}-tasks-${idx}`,
-                                    })
-                                }
-                            >
-                                {task}
-                            </TaskItem>
-                        ))}
-                    </div>
-                </Block>
+                <>
+                    <Block variant="review" num="00" title="复习队列" count="按紧迫度">
+                        <ReviewQueue />
+                    </Block>
+                    <Block variant="algo" num="03" title="复盘任务" count={`${stats.done}/${stats.total}`}>
+                        <div className="task-list">
+                            {day.tasks?.map((task, idx) => (
+                                <TaskItem
+                                    checked={!!state.tasks[`${currentDay}-tasks-${idx}`]}
+                                    key={idx}
+                                    onClick={() =>
+                                        dispatch({
+                                            type: 'TOGGLE_TASK',
+                                            key: `${currentDay}-tasks-${idx}`,
+                                        })
+                                    }
+                                >
+                                    {task}
+                                </TaskItem>
+                            ))}
+                        </div>
+                    </Block>
+                </>
             ) : (
                 <>
                     {/* 复习昨日（Day 2+） */}
