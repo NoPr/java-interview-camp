@@ -6,8 +6,9 @@ import {
     useReducer,
     type ReactNode,
 } from 'react';
-import type { AppState, Tier, ContentType, CustomItem, QuestionPriority } from '../types';
+import type { AppState, Tier, ContentType, CustomItem, QuestionPriority, WeakReason, MasteryLevel, ReviewUrgency, WeakDecisionInput } from '../types';
 import { loadState, saveState } from '../utils/indexeddb';
+import { computeUrgency } from '../utils/reviewUrgency';
 
 // ===================== Action 类型定义 =====================
 export type Action =
@@ -63,7 +64,20 @@ export type Action =
     // order 为新的全量条目 id 顺序
     | { type: 'REORDER_CONTENT'; day: number | string; contentType: ContentType; order: string[] }
     // 从 IndexedDB 加载状态
-    | { type: 'LOAD_STATE'; state: AppState };
+    | { type: 'LOAD_STATE'; state: AppState }
+    // ===================== 不牢固决策与复习队列 =====================
+    // 提交决策弹窗：一次性设置 weakReason + masteryLevel + weakMeta +（跳过时）questionReview + reviewUrgency
+    | { type: 'WEAK_DECISION'; key: string; payload: WeakDecisionInput }
+    // 手动设置不掌握原因
+    | { type: 'SET_WEAK_REASON'; key: string; reason: WeakReason }
+    // 手动设置掌握程度（与 questionStatus.mastered 双向同步）
+    | { type: 'SET_MASTERY_LEVEL'; key: string; level: MasteryLevel }
+    // 手动设置复习紧迫度
+    | { type: 'SET_REVIEW_URGENCY'; key: string; urgency: ReviewUrgency }
+    // 打开决策弹窗
+    | { type: 'OPEN_WEAK_DIALOG'; key: string; text: string; priority: QuestionPriority }
+    // 关闭决策弹窗
+    | { type: 'CLOSE_WEAK_DIALOG' };
 
 // ===================== 初始状态 =====================
 export const initialState: AppState = {
@@ -277,6 +291,66 @@ export function reducer(state: AppState, action: Action): AppState {
         case 'LOAD_STATE':
             // 与 initialState 合并，兼容旧版本缺少 customContent/hiddenContent 的状态
             return { ...initialState, ...action.state };
+        case 'WEAK_DECISION': {
+            const { reason, mastery, decision, isPrerequisite, priority, day, text } = action.payload;
+            const key = action.key;
+            const weakReason = { ...state.weakReason, [key]: reason };
+            const masteryLevel = { ...state.masteryLevel, [key]: mastery };
+            const weakMeta = { ...state.weakMeta, [key]: { day, text } };
+            let questionReview = state.questionReview;
+            let reviewUrgency = state.reviewUrgency;
+            if (decision === 'skip') {
+                questionReview = { ...questionReview, [key]: true };
+                reviewUrgency = {
+                    ...reviewUrgency,
+                    [key]: computeUrgency(isPrerequisite, mastery, priority),
+                };
+            }
+            return { ...state, weakReason, masteryLevel, weakMeta, questionReview, reviewUrgency };
+        }
+        case 'SET_WEAK_REASON': {
+            return {
+                ...state,
+                weakReason: { ...state.weakReason, [action.key]: action.reason },
+            };
+        }
+        case 'SET_MASTERY_LEVEL': {
+            const masteryLevel = { ...state.masteryLevel, [action.key]: action.level };
+            // 同步 questionStatus.mastered（面试题）
+            const questionStatus = { ...state.questionStatus };
+            if (questionStatus[action.key]) {
+                questionStatus[action.key] = {
+                    ...questionStatus[action.key],
+                    mastered: action.level === 'mastered',
+                };
+            }
+            // 若标记为已掌握，自动从复习队列移除
+            let questionReview = state.questionReview;
+            if (action.level === 'mastered' && questionReview[action.key]) {
+                questionReview = { ...questionReview, [action.key]: false };
+            }
+            return { ...state, masteryLevel, questionStatus, questionReview };
+        }
+        case 'SET_REVIEW_URGENCY': {
+            return {
+                ...state,
+                reviewUrgency: { ...state.reviewUrgency, [action.key]: action.urgency },
+            };
+        }
+        case 'OPEN_WEAK_DIALOG': {
+            return {
+                ...state,
+                dialogState: {
+                    open: true,
+                    key: action.key,
+                    text: action.text,
+                    priority: action.priority,
+                },
+            };
+        }
+        case 'CLOSE_WEAK_DIALOG': {
+            return { ...state, dialogState: null };
+        }
         default:
             return state;
     }
