@@ -59,7 +59,9 @@ export type Action =
     | { type: 'SET_MASTERY_LEVEL'; key: string; level: MasteryLevel }
     | { type: 'SET_REVIEW_URGENCY'; key: string; urgency: ReviewUrgency }
     | { type: 'OPEN_WEAK_DIALOG'; key: string; text: string; priority: QuestionPriority }
-    | { type: 'CLOSE_WEAK_DIALOG' };
+    | { type: 'CLOSE_WEAK_DIALOG' }
+    // 清除某题所有不牢固标记，回到从未标记状态
+    | { type: 'CLEAR_WEAK_MARK'; key: string };
 
 // ===================== 初始状态 =====================
 export const initialState: AppState = {
@@ -283,13 +285,8 @@ export function reducer(state: AppState, action: Action): AppState {
                     mastered: action.level === 'mastered',
                 };
             }
-            // 若标记为已掌握，自动从复习队列移除（统一 delete 风格保持对象干净）
-            let questionReview = state.questionReview;
-            if (action.level === 'mastered' && questionReview[action.key]) {
-                questionReview = { ...questionReview };
-                delete questionReview[action.key];
-            }
-            return { ...state, masteryLevel, questionStatus, questionReview };
+            // 已掌握的题留在复习队列，归入"已掌握"分组置底展示（不再自动移出）
+            return { ...state, masteryLevel, questionStatus };
         }
         case 'SET_REVIEW_URGENCY': {
             return {
@@ -310,6 +307,33 @@ export function reducer(state: AppState, action: Action): AppState {
         }
         case 'CLOSE_WEAK_DIALOG': {
             return { ...state, dialogState: null };
+        }
+        case 'CLEAR_WEAK_MARK': {
+            const key = action.key;
+            const weakReason = { ...state.weakReason };
+            const masteryLevel = { ...state.masteryLevel };
+            const reviewUrgency = { ...state.reviewUrgency };
+            const weakMeta = { ...state.weakMeta };
+            const questionReview = { ...state.questionReview };
+            delete weakReason[key];
+            delete masteryLevel[key];
+            delete reviewUrgency[key];
+            delete weakMeta[key];
+            delete questionReview[key];
+            // 同步 questionStatus.mastered（若存在）
+            const questionStatus = { ...state.questionStatus };
+            if (questionStatus[key]) {
+                questionStatus[key] = { ...questionStatus[key], mastered: false };
+            }
+            return {
+                ...state,
+                weakReason,
+                masteryLevel,
+                reviewUrgency,
+                weakMeta,
+                questionReview,
+                questionStatus,
+            };
         }
         default:
             return state;

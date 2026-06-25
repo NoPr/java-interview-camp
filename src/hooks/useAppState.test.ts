@@ -247,7 +247,7 @@ describe('reducer — 不牢固决策（WEAK_DECISION）', () => {
 });
 
 describe('reducer — SET_MASTERY_LEVEL', () => {
-    it('标记 mastered 时同步 questionStatus.mastered 并从复习队列移除', () => {
+    it('标记 mastered 时同步 questionStatus.mastered 并保留在复习队列（归入已掌握分组置底）', () => {
         const s0 = makeState({
             questionStatus: { q1: { mastered: false, priority: 'yellow' } },
             questionReview: { q1: true },
@@ -255,7 +255,8 @@ describe('reducer — SET_MASTERY_LEVEL', () => {
         const s = reducer(s0, { type: 'SET_MASTERY_LEVEL', key: 'q1', level: 'mastered' });
         expect(s.masteryLevel.q1).toBe('mastered');
         expect(s.questionStatus.q1.mastered).toBe(true);
-        expect(s.questionReview.q1).toBeUndefined(); // 已 delete
+        // 已掌握不再自动移出复习队列，由 ReviewQueue 归入"已掌握"分组置底展示
+        expect(s.questionReview.q1).toBe(true);
     });
 
     it('标记非 mastered 时保留在复习队列', () => {
@@ -272,6 +273,52 @@ describe('reducer — SET_MASTERY_LEVEL', () => {
         const s = reducer(makeState(), { type: 'SET_MASTERY_LEVEL', key: 'q1', level: 'mastered' });
         expect(s.masteryLevel.q1).toBe('mastered');
         expect(s.questionStatus.q1).toBeUndefined();
+    });
+});
+
+describe('reducer — CLEAR_WEAK_MARK', () => {
+    it('清除某题所有不牢固标记并移出复习队列', () => {
+        const s0 = makeState({
+            weakReason: { q1: 'concept', q2: 'memory' },
+            masteryLevel: { q1: 'vague', q2: 'clueless' },
+            reviewUrgency: { q1: 'high', q2: 'low' },
+            weakMeta: { q1: { day: 1, text: '题1' } },
+            questionReview: { q1: true, q2: true },
+            questionStatus: { q1: { mastered: false, priority: 'yellow' } },
+        });
+        const s = reducer(s0, { type: 'CLEAR_WEAK_MARK', key: 'q1' });
+        // q1 所有标记被清除
+        expect(s.weakReason.q1).toBeUndefined();
+        expect(s.masteryLevel.q1).toBeUndefined();
+        expect(s.reviewUrgency.q1).toBeUndefined();
+        expect(s.weakMeta.q1).toBeUndefined();
+        expect(s.questionReview.q1).toBeUndefined();
+        // questionStatus.mastered 同步重置为 false
+        expect(s.questionStatus.q1.mastered).toBe(false);
+        // q2 不受影响
+        expect(s.weakReason.q2).toBe('memory');
+        expect(s.questionReview.q2).toBe(true);
+    });
+
+    it('questionStatus 不存在时不报错', () => {
+        const s0 = makeState({
+            weakReason: { q1: 'concept' },
+            questionReview: { q1: true },
+        });
+        const s = reducer(s0, { type: 'CLEAR_WEAK_MARK', key: 'q1' });
+        expect(s.weakReason.q1).toBeUndefined();
+        expect(s.questionReview.q1).toBeUndefined();
+        expect(s.questionStatus.q1).toBeUndefined();
+    });
+
+    it('不修改原 state（不可变）', () => {
+        const original = makeState({
+            weakReason: { q1: 'concept' },
+            questionReview: { q1: true },
+        });
+        reducer(original, { type: 'CLEAR_WEAK_MARK', key: 'q1' });
+        expect(original.weakReason).toEqual({ q1: 'concept' });
+        expect(original.questionReview).toEqual({ q1: true });
     });
 });
 
