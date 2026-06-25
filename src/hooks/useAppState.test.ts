@@ -357,3 +357,70 @@ describe('reducer — 未知 action', () => {
         expect(s).toBe(s0);
     });
 });
+
+describe('reducer — 内容编辑（UPDATE_CUSTOM / SET_PRESET_OVERRIDE / CLEAR_PRESET_OVERRIDE）', () => {
+    it('UPDATE_CUSTOM 修改自定义 mock 的 q，其他 item 不变', () => {
+        const item1 = makeCustomItem({ id: 'c1', content: '', q: '原问题', tips: '原要点' });
+        const item2 = makeCustomItem({ id: 'c2', content: '', q: '另一题', tips: '' });
+        const s = makeState({ customContent: { '5-mock': [item1, item2] } });
+        const next = reducer(s, {
+            type: 'UPDATE_CUSTOM',
+            day: 5,
+            contentType: 'mock',
+            id: 'c1',
+            patch: { q: '新问题', tips: '新要点' },
+        });
+        expect(next.customContent['5-mock'][0]).toEqual({ id: 'c1', content: '', q: '新问题', tips: '新要点' });
+        expect(next.customContent['5-mock'][1]).toEqual(item2);
+    });
+
+    it('UPDATE_CUSTOM id 不存在时无副作用（state 引用不变）', () => {
+        const item = makeCustomItem({ id: 'c1', content: 'x' });
+        const s = makeState({ customContent: { '5-knowledge': [item] } });
+        const next = reducer(s, {
+            type: 'UPDATE_CUSTOM',
+            day: 5,
+            contentType: 'knowledge',
+            id: 'not-exist',
+            patch: { content: 'y' },
+        });
+        expect(next).toBe(s);
+    });
+
+    it('SET_PRESET_OVERRIDE 首次设置写入覆盖层', () => {
+        const s = makeState();
+        const next = reducer(s, {
+            type: 'SET_PRESET_OVERRIDE',
+            day: 5,
+            contentType: 'mock',
+            index: 0,
+            patch: { q: '编辑后的问题' },
+        });
+        expect(next.presetOverrides['5-mock-0']).toEqual({ q: '编辑后的问题' });
+    });
+
+    it('SET_PRESET_OVERRIDE 二次部分更新，未传字段保留', () => {
+        const s = makeState({ presetOverrides: { '5-mock-0': { q: '新问题', tips: '新要点' } } });
+        const next = reducer(s, {
+            type: 'SET_PRESET_OVERRIDE',
+            day: 5,
+            contentType: 'mock',
+            index: 0,
+            patch: { q: '更新问题' },
+        });
+        expect(next.presetOverrides['5-mock-0']).toEqual({ q: '更新问题', tips: '新要点' });
+    });
+
+    it('CLEAR_PRESET_OVERRIDE 清除指定 key', () => {
+        const s = makeState({ presetOverrides: { '5-mock-0': { q: 'x' }, '5-card-0': { title: 'y' } } });
+        const next = reducer(s, { type: 'CLEAR_PRESET_OVERRIDE', day: 5, contentType: 'mock', index: 0 });
+        expect(next.presetOverrides['5-mock-0']).toBeUndefined();
+        expect(next.presetOverrides['5-card-0']).toEqual({ title: 'y' });
+    });
+
+    it('CLEAR_PRESET_OVERRIDE key 不存在时返回原 state（引用不变）', () => {
+        const s = makeState({ presetOverrides: {} });
+        const next = reducer(s, { type: 'CLEAR_PRESET_OVERRIDE', day: 5, contentType: 'mock', index: 0 });
+        expect(next).toBe(s);
+    });
+});

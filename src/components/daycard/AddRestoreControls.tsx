@@ -2,19 +2,26 @@ import { useState } from 'react';
 import type { ContentType, CustomItem } from '../../types';
 import { generateId } from './helpers';
 
-// inline 输入框：根据类型显示不同字段
+// inline 输入框：支持添加模式（空值起手）和编辑模式（预填值 + 恢复原文）
 // knowledge/mustKnow/tier5/tier6: 1 个文本框；mock: 问题+要点；card: 标题+关键词；question: 题目
 export function InlineInput({
     type,
     onConfirm,
     onCancel,
+    initial,
+    isPreset,
+    onRestoreOriginal,
 }: {
     type: ContentType;
-    onConfirm: (item: CustomItem) => void;
+    onConfirm: (payload: CustomItem | { patch: Partial<CustomItem> }) => void;
     onCancel: () => void;
+    initial?: { v1: string; v2: string };
+    isPreset?: boolean;
+    onRestoreOriginal?: () => void;
 }) {
-    const [v1, setV1] = useState('');
-    const [v2, setV2] = useState('');
+    const [v1, setV1] = useState(initial?.v1 ?? '');
+    const [v2, setV2] = useState(initial?.v2 ?? '');
+    const isEditMode = !!initial;
 
     const isMock = type === 'mock';
     const isCard = type === 'card';
@@ -24,14 +31,18 @@ export function InlineInput({
 
     const handleConfirm = () => {
         const text1 = v1.trim();
-        if (!text1) return;
-        const id = generateId();
-        if (isMock) {
-            onConfirm({ id, content: '', q: text1, tips: v2.trim() });
-        } else if (isCard) {
-            onConfirm({ id, content: '', title: text1, keywords: v2.trim() });
+        if (!text1) return; // 非空校验，添加/编辑模式共用
+        if (isEditMode) {
+            // 编辑模式：返回 patch
+            if (isMock) onConfirm({ patch: { q: text1, tips: v2.trim() } });
+            else if (isCard) onConfirm({ patch: { title: text1, keywords: v2.trim() } });
+            else onConfirm({ patch: { content: text1 } });
         } else {
-            onConfirm({ id, content: text1 });
+            // 添加模式：返回完整 CustomItem
+            const id = generateId();
+            if (isMock) onConfirm({ id, content: '', q: text1, tips: v2.trim() });
+            else if (isCard) onConfirm({ id, content: '', title: text1, keywords: v2.trim() });
+            else onConfirm({ id, content: text1 });
         }
     };
 
@@ -59,6 +70,11 @@ export function InlineInput({
                 <button className="btn" onClick={onCancel}>
                     取消
                 </button>
+                {isPreset && onRestoreOriginal && (
+                    <button className="btn-restore-original" onClick={onRestoreOriginal}>
+                        恢复原文
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -88,8 +104,8 @@ export function AddRestoreControls({
             {isAdding ? (
                 <InlineInput
                     type={type}
-                    onConfirm={(item) => {
-                        onAdd(item);
+                    onConfirm={(payload) => {
+                        onAdd(payload as CustomItem);
                         setAddingType(null);
                     }}
                     onCancel={() => setAddingType(null)}

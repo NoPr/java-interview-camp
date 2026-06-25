@@ -55,6 +55,16 @@ export interface CustomItem {
   keywords?: string;
 }
 
+// 预置内容覆盖项：只放被编辑过的字段，未编辑字段保持 undefined
+// key: `${day}-${type}-${index}`，如 "5-mock-0" / "5-card-0"
+// mock 用 q/tips；card 用 title/keywords
+export interface PresetOverride {
+  q?: string;
+  tips?: string;
+  title?: string;
+  keywords?: string;
+}
+
 // 技术栈相关类型
 export interface TechStack {
   id: string;
@@ -114,6 +124,8 @@ export interface AppState {
   // 技术栈级用 `techStack-${stackId}-${type}`
   // value 为排序后的条目 id 数组（存全量顺序，含被隐藏/被过滤的条目）
   contentOrder: Record<string, string[]>;
+  // 预置内容覆盖层：key 为 `${day}-${type}-${index}`，value 为用户对预置项的修改
+  presetOverrides: Record<string, PresetOverride>;
     // ===================== 不牢固决策与复习队列 =====================
     // 不掌握原因：key 为 contentKey/questionId
     weakReason: Record<string, WeakReason>;

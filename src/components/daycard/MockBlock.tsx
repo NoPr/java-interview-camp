@@ -7,8 +7,10 @@ import { SortableSection } from '../SortableSection';
 import { mergeWithOrder } from '../../utils/mergeWithOrder';
 import type { OrderableItem } from '../../utils/mergeWithOrder';
 import { Block } from './Block';
-import { AddRestoreControls } from './AddRestoreControls';
+import { AddRestoreControls, InlineInput } from './AddRestoreControls';
 import { PriorityBadge } from './PriorityBadge';
+import { resolvePresetMock } from './helpers';
+import type { PresetOverride } from '../../types';
 
 // 渲染模拟题区块（折叠参考要点 + 计时器，支持增删）
 // 预置模拟题要点展开使用 state.mockTipsExpanded 持久化；自定义模拟题保留本地 state
@@ -16,6 +18,7 @@ export function MockBlock({ currentDay }: { currentDay: number }) {
     const { state, dispatch } = useAppState();
     const [addingType, setAddingType] = useState<ContentType | null>(null);
     const [expandedMock, setExpandedMock] = useState<Set<string>>(new Set());
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const type: ContentType = 'mock';
     const key = `${currentDay}-${type}`;
@@ -33,7 +36,37 @@ export function MockBlock({ currentDay }: { currentDay: number }) {
         const checked = !!state.mock[mockKey];
         const tipsKey = `${currentDay}-${idx}`;
         const isExpanded = !!state.mockTipsExpanded?.[tipsKey];
-        const priority = getQuestionPriority(m.q);
+        const resolved = resolvePresetMock(state, currentDay, idx, m);
+        const priority = getQuestionPriority(resolved.q);
+        const isEditing = editingId === `p-${idx}`;
+
+        if (isEditing) {
+            return {
+                id: mockKey,
+                node: (
+                    <InlineInput
+                        type={type}
+                        initial={{ v1: resolved.q, v2: resolved.tips }}
+                        isPreset
+                        onRestoreOriginal={() =>
+                            dispatch({ type: 'CLEAR_PRESET_OVERRIDE', day: currentDay, contentType: type, index: idx })
+                        }
+                        onConfirm={(payload) => {
+                            dispatch({
+                                type: 'SET_PRESET_OVERRIDE',
+                                day: currentDay,
+                                contentType: type,
+                                index: idx,
+                                patch: (payload as { patch: PresetOverride }).patch,
+                            });
+                            setEditingId(null);
+                        }}
+                        onCancel={() => setEditingId(null)}
+                    />
+                ),
+            };
+        }
+
         return {
             id: mockKey,
             node: (
@@ -44,10 +77,20 @@ export function MockBlock({ currentDay }: { currentDay: number }) {
                             onClick={() => dispatch({ type: 'TOGGLE_MOCK', key: mockKey })}
                         />
                         <div className="mock-question">
-                            {m.q}
+                            {resolved.q}
                             <PriorityBadge priority={priority} />
                         </div>
                         <span className="ed-mock-timer">⏱ {idx < 2 ? '2min' : '3min'}</span>
+                        <button
+                            className="edit-btn"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingId(`p-${idx}`);
+                            }}
+                            title="编辑"
+                        >
+                            ✏️
+                        </button>
                         <button
                             className="delete-btn"
                             onClick={(e) => {
@@ -64,7 +107,7 @@ export function MockBlock({ currentDay }: { currentDay: number }) {
                             ×
                         </button>
                     </div>
-                    {m.tips && (
+                    {resolved.tips && (
                         <details
                             className="ed-mock-tips"
                             open={isExpanded}
@@ -78,7 +121,7 @@ export function MockBlock({ currentDay }: { currentDay: number }) {
                             }
                         >
                             <summary>参考要点</summary>
-                            <p>{m.tips}</p>
+                            <p>{resolved.tips}</p>
                         </details>
                     )}
                 </div>
@@ -90,6 +133,31 @@ export function MockBlock({ currentDay }: { currentDay: number }) {
         const checked = !!state.mock[mockKey];
         const expanded = expandedMock.has(`c-${item.id}`);
         const priority = getQuestionPriority(item.q || '');
+        const isEditing = editingId === `custom-${item.id}`;
+
+        if (isEditing) {
+            return {
+                id: mockKey,
+                node: (
+                    <InlineInput
+                        type={type}
+                        initial={{ v1: item.q || '', v2: item.tips || '' }}
+                        onConfirm={(payload) => {
+                            dispatch({
+                                type: 'UPDATE_CUSTOM',
+                                day: currentDay,
+                                contentType: type,
+                                id: item.id,
+                                patch: (payload as { patch: { q?: string; tips?: string } }).patch,
+                            });
+                            setEditingId(null);
+                        }}
+                        onCancel={() => setEditingId(null)}
+                    />
+                ),
+            };
+        }
+
         return {
             id: mockKey,
             node: (
@@ -104,6 +172,16 @@ export function MockBlock({ currentDay }: { currentDay: number }) {
                             <PriorityBadge priority={priority} />
                         </div>
                         <span className="ed-mock-timer">⏱ 3min</span>
+                        <button
+                            className="edit-btn"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingId(`custom-${item.id}`);
+                            }}
+                            title="编辑"
+                        >
+                            ✏️
+                        </button>
                         <button
                             className="delete-btn"
                             onClick={(e) => {

@@ -6,6 +6,7 @@ import { useAppState } from '../hooks/useAppState';
 import { InterviewQuestion, QuestionPriority, ContentType, CustomItem } from '../types';
 import { priorityLabel } from '../utils/questionMatcher';
 import { AddRestoreControls } from './daycard/AddRestoreControls';
+import { resolvePresetMock } from './daycard/helpers';
 import { SortableSection } from './SortableSection';
 import { mergeWithOrder, type OrderableItem } from '../utils/mergeWithOrder';
 
@@ -335,7 +336,9 @@ export function TechStackView() {
                                     checked={state.mock[mockKey] || false}
                                     onChange={() => dispatch({ type: 'TOGGLE_MOCK', key: mockKey })}
                                 />
-                                <span className="content-text">{item.q}</span>
+                                <span className="content-text">
+                                    {resolvePresetMock(state, item.day, item.index, { q: item.q, tips: item.tips }).q}
+                                </span>
                                 <button
                                     className="day-link"
                                     onClick={() => jumpToDay(item.day)}

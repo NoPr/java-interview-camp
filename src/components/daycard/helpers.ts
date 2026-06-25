@@ -1,4 +1,4 @@
-import type { DayData } from '../../types';
+import type { DayData, MockQuestion } from '../../types';
 import type { useAppState } from '../../hooks/useAppState';
 
 // 区块变体类型（Editorial Hybrid 单色系）
@@ -79,4 +79,28 @@ export function getDayStats(dayNum: number, day: DayData, state: AppStateRef) {
     }
 
     return { total, done, progress: total === 0 ? 0 : done / total };
+}
+
+// 读取预置模拟题的有效值：有 override 用 override，否则用原值
+export function resolvePresetMock(
+    state: AppStateRef,
+    day: number,
+    index: number,
+    original: MockQuestion,
+): MockQuestion {
+    const ov = state.presetOverrides[`${day}-mock-${index}`];
+    if (!ov) return original;
+    return { q: ov.q ?? original.q, tips: ov.tips ?? original.tips };
+}
+
+// 读取预置关键词卡片的有效值：有 override 用 override，否则用原值
+export function resolvePresetCard(
+    state: AppStateRef,
+    day: number,
+    index: number,
+    original: { title: string; keywords: string },
+): { title: string; keywords: string } {
+    const ov = state.presetOverrides[`${day}-card-${index}`];
+    if (!ov) return original;
+    return { title: ov.title ?? original.title, keywords: ov.keywords ?? original.keywords };
 }

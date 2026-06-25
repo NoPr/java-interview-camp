@@ -22,3 +22,17 @@ npm-debug.log*
 # Environment
 .env
 .env.local
+
+# Build artifacts archive
+*.rar
+dist.rar
+
+# Local working memory (agent tooling)
+.workbuddy/
+
+# Design docs (local-only, not for sync)
+docs/superpowers/
+docs/code-review-standards.md
+overview.md
+2026-06-23-*.md
+docs/design-prototypes/

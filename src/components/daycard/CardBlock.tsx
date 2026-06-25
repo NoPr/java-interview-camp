@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import type { ContentType } from '../../types';
+import type { ContentType, CustomItem, PresetOverride } from '../../types';
 import { useAppState } from '../../hooks/useAppState';
 import { PLAN } from '../../data/plan';
 import { Block } from './Block';
-import { AddRestoreControls } from './AddRestoreControls';
+import { AddRestoreControls, InlineInput } from './AddRestoreControls';
+import { resolvePresetCard } from './helpers';
 
 // 渲染知识卡片区块（3D 翻转 + 自评，支持增删）
 //
@@ -13,6 +14,7 @@ export function CardBlock({ currentDay }: { currentDay: number }) {
     const { state, dispatch } = useAppState();
     const [addingType, setAddingType] = useState<ContentType | null>(null);
     const [flippedCards, setFlippedCards] = useState<Record<string, boolean>>({});
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const type: ContentType = 'card';
     const key = `${currentDay}-${type}`;
@@ -63,14 +65,76 @@ export function CardBlock({ currentDay }: { currentDay: number }) {
                     const cardKey = `${currentDay}-${card.idx}`;
                     const evalResult = state.cardEval?.[cardKey];
                     const isFlipped = flippedCards[cardKey] || false;
+                    const isEditingPreset = !card.isCustom && editingId === 'p-0';
+                    const isEditingCustom = card.isCustom && editingId === `custom-${card.customId}`;
+                    const resolved = card.isCustom
+                        ? { title: card.title, keywords: card.keywords }
+                        : resolvePresetCard(state, currentDay, 0, { title: card.title, keywords: card.keywords });
+
+                    if (isEditingPreset || isEditingCustom) {
+                        return (
+                            <InlineInput
+                                key={card.isCustom ? `c-${card.customId}` : 'p-0'}
+                                type={type}
+                                initial={{ v1: resolved.title, v2: resolved.keywords }}
+                                isPreset={!card.isCustom}
+                                onRestoreOriginal={
+                                    !card.isCustom
+                                        ? () =>
+                                              dispatch({
+                                                  type: 'CLEAR_PRESET_OVERRIDE',
+                                                  day: currentDay,
+                                                  contentType: type,
+                                                  index: 0,
+                                              })
+                                        : undefined
+                                }
+                                onConfirm={(payload) => {
+                                    if (card.isCustom) {
+                                        dispatch({
+                                            type: 'UPDATE_CUSTOM',
+                                            day: currentDay,
+                                            contentType: type,
+                                            id: card.customId!,
+                                            patch: (payload as { patch: Partial<CustomItem> }).patch,
+                                        });
+                                    } else {
+                                        dispatch({
+                                            type: 'SET_PRESET_OVERRIDE',
+                                            day: currentDay,
+                                            contentType: type,
+                                            index: 0,
+                                            patch: (payload as { patch: PresetOverride }).patch,
+                                        });
+                                    }
+                                    setEditingId(null);
+                                }}
+                                onCancel={() => setEditingId(null)}
+                            />
+                        );
+                    }
+
                     return (
                         <div
                             key={card.isCustom ? `c-${card.customId}` : 'p-0'}
                             className={`ed-card ${isFlipped ? 'flipped' : ''} ${evalResult ? `eval-${evalResult}` : ''}`}
-                            onClick={() => toggleFlip(cardKey)}
+                            onClick={() => {
+                                if (editingId) return;
+                                toggleFlip(cardKey);
+                            }}
                         >
                             <div className="ed-card-inner">
                                 <div className="ed-card-front">
+                                    <button
+                                        className="ed-card-edit"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditingId(card.isCustom ? `custom-${card.customId}` : 'p-0');
+                                        }}
+                                        title="编辑"
+                                    >
+                                        ✏️
+                                    </button>
                                     <button
                                         className="ed-card-del"
                                         onClick={(e) => {
@@ -95,11 +159,11 @@ export function CardBlock({ currentDay }: { currentDay: number }) {
                                     >
                                         ×
                                     </button>
-                                    <div className="ed-card-title">{card.title}</div>
+                                    <div className="ed-card-title">{resolved.title}</div>
                                     <div className="ed-card-hint">点击翻转自测</div>
                                 </div>
                                 <div className="ed-card-back">
-                                    <div className="ed-card-answer">{card.keywords}</div>
+                                    <div className="ed-card-answer">{resolved.keywords}</div>
                                     <div className="ed-card-actions" onClick={(e) => e.stopPropagation()}>
                                         <button
                                             className="ed-card-eval pass"

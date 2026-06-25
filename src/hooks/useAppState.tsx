@@ -7,7 +7,7 @@ import {
     useRef,
     type ReactNode,
 } from 'react';
-import type { AppState, Tier, ContentType, CustomItem, QuestionPriority, WeakReason, MasteryLevel, ReviewUrgency, WeakDecisionInput } from '../types';
+import type { AppState, Tier, ContentType, CustomItem, QuestionPriority, WeakReason, MasteryLevel, ReviewUrgency, WeakDecisionInput, PresetOverride } from '../types';
 import { loadState, saveState } from '../utils/indexeddb';
 import { computeUrgency } from '../utils/reviewUrgency';
 import { toggleKey } from '../utils/toggleKey';
@@ -50,6 +50,12 @@ export type Action =
     // 调整内容排序，payload: { day, contentType, order }
     // order 为新的全量条目 id 顺序
     | { type: 'REORDER_CONTENT'; day: number | string; contentType: ContentType; order: string[] }
+    // 编辑自定义内容：合并 patch 到 customContent 对应 item
+    | { type: 'UPDATE_CUSTOM'; day: number | string; contentType: ContentType; id: string; patch: Partial<CustomItem> }
+    // 设置预置内容覆盖层：合并 patch 到 presetOverrides[key]
+    | { type: 'SET_PRESET_OVERRIDE'; day: number; contentType: ContentType; index: number; patch: PresetOverride }
+    // 清除预置内容覆盖层：恢复 plan.ts 原文
+    | { type: 'CLEAR_PRESET_OVERRIDE'; day: number; contentType: ContentType; index: number }
     | { type: 'LOAD_STATE'; state: AppState }
     // ===================== 不牢固决策与复习队列 =====================
     // 提交决策弹窗：一次性设置 weakReason + masteryLevel + weakMeta +（跳过时）questionReview + reviewUrgency
@@ -85,6 +91,8 @@ export const initialState: AppState = {
     techStackFilter: 'all' as const,
     sidebarOpen: false,
     contentOrder: {},
+    // 预置内容覆盖层（编辑预置题/卡片时写入）
+    presetOverrides: {},
     // 不牢固决策与复习队列
     weakReason: {},
     masteryLevel: {},
@@ -240,6 +248,37 @@ export function reducer(state: AppState, action: Action): AppState {
                 contentOrder: { ...state.contentOrder, [key]: action.order },
             };
         }
+        case 'UPDATE_CUSTOM': {
+            const key = `${action.day}-${action.contentType}`;
+            const arr = state.customContent[key] || [];
+            // id 不存在时短路返回原 state，保持引用不变（防重渲染）
+            if (!arr.some((i) => i.id === action.id)) return state;
+            return {
+                ...state,
+                customContent: {
+                    ...state.customContent,
+                    [key]: arr.map((i) => (i.id === action.id ? { ...i, ...action.patch } : i)),
+                },
+            };
+        }
+        case 'SET_PRESET_OVERRIDE': {
+            const key = `${action.day}-${action.contentType}-${action.index}`;
+            const prev = state.presetOverrides[key] || {};
+            return {
+                ...state,
+                presetOverrides: {
+                    ...state.presetOverrides,
+                    [key]: { ...prev, ...action.patch },
+                },
+            };
+        }
+        case 'CLEAR_PRESET_OVERRIDE': {
+            const key = `${action.day}-${action.contentType}-${action.index}`;
+            if (!state.presetOverrides[key]) return state;
+            const next = { ...state.presetOverrides };
+            delete next[key];
+            return { ...state, presetOverrides: next };
+        }
         case 'ADD_TO_REVIEW': {
             const newReview = { ...state.questionReview };
             action.items.forEach((id) => {
@@ -368,6 +407,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
             if (!migratedState.techStackFilter) migratedState.techStackFilter = 'all';
             if (migratedState.sidebarOpen === undefined) migratedState.sidebarOpen = false;
             if (!migratedState.contentOrder) migratedState.contentOrder = {};
+            if (!migratedState.presetOverrides) migratedState.presetOverrides = {};
             if (!migratedState.weakReason) migratedState.weakReason = {};
             if (!migratedState.masteryLevel) migratedState.masteryLevel = {};
             if (!migratedState.reviewUrgency) migratedState.reviewUrgency = {};
