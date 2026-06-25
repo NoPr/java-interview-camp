@@ -4,7 +4,7 @@
 
 ## 🌐 在线访问
 
-> 部署后回填 GitHub Pages 链接（首次 push 后由 GitHub Actions 自动构建，约 1-2 分钟生效）
+**[https://nopr.github.io/java-interview-camp/](https://nopr.github.io/java-interview-camp/)**
 
 ## ✨ 核心特性
 
