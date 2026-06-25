@@ -598,6 +598,7 @@ body {
   color: var(--ed-ink-soft);
   line-height: 1.5;
   flex: 1;
+  white-space: pre-wrap;
 }
 
 .task-item.done .task-text {
@@ -644,6 +645,73 @@ body {
 .delete-btn:hover {
   color: var(--ed-red);
   background: var(--bg-block-red);
+}
+
+/* 编辑按钮：复用 .delete-btn 尺寸，颜色用品牌中色（区别于删除的红色） */
+.edit-btn {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--ed-ink-faint);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--ed-r-sm);
+  transition: var(--ed-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.edit-btn:hover {
+  color: var(--ed-brand-mid);
+  background: var(--ed-mist);
+}
+
+/* 卡片编辑按钮：绝对定位在卡片正面右上角（删除按钮左侧） */
+.ed-card-edit {
+  position: absolute;
+  top: 8px;
+  right: 32px;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--ed-ink-faint);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--ed-r-sm);
+  transition: var(--ed-transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.ed-card-edit:hover {
+  color: var(--ed-brand-mid);
+  background: var(--ed-mist);
+}
+
+/* 恢复原文链接：次级文字色 + hover 高亮 */
+.btn-restore-original {
+  background: transparent;
+  border: none;
+  color: var(--ed-ink-muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 6px;
+  text-decoration: underline;
+  transition: var(--ed-transition);
+}
+
+.btn-restore-original:hover {
+  color: var(--ed-brand-mid);
 }
 
 /* 增删控制区 */
@@ -745,6 +813,7 @@ body {
   color: var(--ed-ink-soft);
   line-height: 1.5;
   flex: 1;
+  white-space: pre-wrap;
 }
 
 .mock-item.done .mock-question {
@@ -1343,6 +1412,7 @@ body {
 .techstack-section .content-text {
   flex: 1;
   line-height: 1.6;
+  white-space: pre-wrap;
 }
 
 .day-link {
@@ -1847,6 +1917,7 @@ body {
   flex: 1;
   line-height: 1.65;
   color: var(--ed-ink-soft);
+  white-space: pre-wrap;
 }
 
 /* Day 跳转链接：编辑风小标签 */
@@ -2152,6 +2223,7 @@ body {
     font-weight: 600;
     color: var(--ed-ink);
     text-align: center;
+    white-space: pre-wrap;
 }
 .ed-card-hint {
     font-size: 11px;
@@ -2164,6 +2236,7 @@ body {
     text-align: center;
     margin-bottom: 12px;
     line-height: 1.5;
+    white-space: pre-wrap;
 }
 .ed-card-actions {
     display: flex;
@@ -2390,6 +2463,7 @@ body {
     margin-top: 6px;
     color: var(--ed-ink-soft);
     line-height: 1.5;
+    white-space: pre-wrap;
 }
 
 /* ===== REVIEW BLOCK ===== */
