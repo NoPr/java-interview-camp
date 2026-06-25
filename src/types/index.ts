@@ -38,6 +38,10 @@ export interface PlanData {
 export type Tier = '3h' | '5h' | '6h';
 
 // 内容类型：支持增删的 7 种类型（question 为技术栈详情页面试题自定义内容）
+//
+// 命名说明：knowledge / mustKnow / mock / card / tier5 / tier6 / question
+// 历史上 mustKnow 用驼峰而 knowledge 等用全小写，因前者来自 PLAN.days.mustKnow 字段名。
+// 改名涉及数据迁移成本，且当前不一致仅限于 mustKnow 一个值，保留现状以避免破坏磁盘数据。
 export type ContentType = 'knowledge' | 'mustKnow' | 'mock' | 'card' | 'tier5' | 'tier6' | 'question';
 
 // 用户自定义内容条目
@@ -121,6 +125,8 @@ export interface AppState {
     weakMeta: Record<string, WeakMeta>;
     // 决策弹窗状态
     dialogState: DialogState | null;
+    // 是否已从 IndexedDB 加载完毕
+    loaded: boolean;
 }
 
 // ===================== 不牢固决策与复习队列 =====================

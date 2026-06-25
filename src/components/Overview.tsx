@@ -41,8 +41,93 @@ function getDayProgress(
     return total === 0 ? 0 : done / total;
 }
 
+// 热力日历颜色等级：0-4
+function heatLevel(progress: number): number {
+    if (progress >= 1) return 4;
+    if (progress >= 0.75) return 3;
+    if (progress >= 0.5) return 2;
+    if (progress > 0) return 1;
+    return 0;
+}
+
+// 周环形图组件
+function WeekRing({
+    weekIndex,
+    progress,
+    onClick,
+}: {
+    weekIndex: number;
+    progress: number;
+    onClick: () => void;
+}) {
+    const radius = 28;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference * (1 - progress);
+    const percent = Math.round(progress * 100);
+
+    return (
+        <div className="overview-ring-card" onClick={onClick}>
+            <svg viewBox="0 0 72 72" className="overview-ring-svg">
+                <circle
+                    cx="36"
+                    cy="36"
+                    r={radius}
+                    className="overview-ring-bg-circle"
+                />
+                <circle
+                    cx="36"
+                    cy="36"
+                    r={radius}
+                    className="overview-ring-fill-circle"
+                    style={{
+                        strokeDasharray: circumference,
+                        strokeDashoffset: offset,
+                    }}
+                />
+            </svg>
+            <div className="overview-ring-center">
+                <span className="overview-ring-percent">{percent}%</span>
+            </div>
+            <div className="overview-ring-label">W{weekIndex + 1}</div>
+        </div>
+    );
+}
+
 export default function Overview() {
     const { state, dispatch } = useAppState();
+
+    // 计算每周完成率
+    const weekData = PLAN.weeks.map((week, idx) => {
+        let totalProgress = 0;
+        let dayCount = 0;
+        week.days.forEach((dayNum) => {
+            const day = PLAN.days[dayNum];
+            if (day) {
+                totalProgress += getDayProgress(dayNum, day, state);
+                dayCount++;
+            }
+        });
+        return {
+            week,
+            index: idx,
+            progress: dayCount > 0 ? totalProgress / dayCount : 0,
+        };
+    });
+
+    // 构建 30 天热力日历数据
+    const allDayNums = Array.from({ length: 30 }, (_, i) => i + 1);
+    const heatData = allDayNums.map((dayNum) => {
+        const day = PLAN.days[dayNum];
+        if (!day) return { dayNum, level: 0, progress: 0 };
+        const p = getDayProgress(dayNum, day, state);
+        return { dayNum, level: heatLevel(p), progress: p };
+    });
+
+    // 按周分组（每行 7 天，最后一行 2 天）
+    const heatRows: typeof heatData[] = [];
+    for (let i = 0; i < heatData.length; i += 7) {
+        heatRows.push(heatData.slice(i, i + 7));
+    }
 
     return (
         <div className="content">
@@ -65,18 +150,74 @@ export default function Overview() {
                 </div>
             </div>
 
+            {/* 周维度环形完成率 */}
+            <div className="overview-rings">
+                <div className="overview-rings-title">周完成率</div>
+                <div className="overview-rings-row">
+                    {weekData.map(({ week, index, progress }) => (
+                        <WeekRing
+                            key={week.name}
+                            weekIndex={index}
+                            progress={progress}
+                            onClick={() =>
+                                dispatch({ type: 'SET_CURRENT_DAY', day: week.days[0] })
+                            }
+                        />
+                    ))}
+                </div>
+            </div>
+
+            {/* 30 天热力日历 */}
+            <div className="overview-heatmap">
+                <div className="overview-heatmap-title">30 天完成度</div>
+                <div className="overview-heatmap-grid">
+                    {heatRows.map((row, rowIdx) => (
+                        <div className="overview-heatmap-row" key={rowIdx}>
+                            {row.map(({ dayNum, level }) => {
+                                const day = PLAN.days[dayNum];
+                                const isReview = day?.isReview;
+                                return (
+                                    <div
+                                        key={dayNum}
+                                        className={`overview-heat-cell level-${level} ${
+                                            isReview ? 'review' : ''
+                                        } ${state.currentDay === dayNum ? 'current' : ''}`}
+                                        onClick={() =>
+                                            dispatch({ type: 'SET_CURRENT_DAY', day: dayNum })
+                                        }
+                                        title={`Day ${dayNum}${day ? ' · ' + day.title : ''}`}
+                                    >
+                                        <span className="overview-heat-num">{dayNum}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ))}
+                </div>
+                <div className="overview-heatmap-legend">
+                    <span className="overview-heatmap-legend-label">少</span>
+                    <div className="overview-heat-cell level-0 mini" />
+                    <div className="overview-heat-cell level-1 mini" />
+                    <div className="overview-heat-cell level-2 mini" />
+                    <div className="overview-heat-cell level-3 mini" />
+                    <div className="overview-heat-cell level-4 mini" />
+                    <span className="overview-heatmap-legend-label">多</span>
+                </div>
+            </div>
+
+            {state.checkins.length === 0 && (
+                <div className="ed-empty-state ed-empty-state--overview">
+                    <div className="ed-empty-state-icon">📍</div>
+                    <div className="ed-empty-state-title">尚未开始打卡</div>
+                    <div className="ed-empty-state-desc">
+                        点击右上角「打卡」按钮记录今天的学习，开始你的 30 天冲刺之旅。
+                    </div>
+                </div>
+            )}
+
             {PLAN.weeks.map((week) => {
-                // 计算本周完成率
-                let totalProgress = 0;
-                let dayCount = 0;
-                week.days.forEach((dayNum) => {
-                    const day = PLAN.days[dayNum];
-                    if (day) {
-                        totalProgress += getDayProgress(dayNum, day, state);
-                        dayCount++;
-                    }
-                });
-                const weekProgress = dayCount > 0 ? totalProgress / dayCount : 0;
+                const wd = weekData.find((w) => w.week.name === week.name);
+                const weekProgress = wd?.progress ?? 0;
                 const weekPercent = Math.round(weekProgress * 100);
 
                 return (

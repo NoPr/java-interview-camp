@@ -4,79 +4,61 @@ import {
     useEffect,
     useMemo,
     useReducer,
+    useRef,
     type ReactNode,
 } from 'react';
 import type { AppState, Tier, ContentType, CustomItem, QuestionPriority, WeakReason, MasteryLevel, ReviewUrgency, WeakDecisionInput } from '../types';
 import { loadState, saveState } from '../utils/indexeddb';
 import { computeUrgency } from '../utils/reviewUrgency';
+import { toggleKey } from '../utils/toggleKey';
 
 // ===================== Action 类型定义 =====================
 export type Action =
-    // 切换任务勾选，payload: { key, value? }
+    // 切换任务勾选，payload: { key, value? }；value 未传时为 toggle 语义
     | { type: 'TOGGLE_TASK'; key: string; value?: boolean }
     // 切换模拟题勾选，payload: { key, value? }
     | { type: 'TOGGLE_MOCK'; key: string; value?: boolean }
     // 切换算法题勾选，payload: { key, value? }
     | { type: 'TOGGLE_ALGO'; key: string; value?: boolean }
-    // 切换档位
     | { type: 'SET_TIER'; tier: Tier }
-    // 设置当前 Day
     | { type: 'SET_CURRENT_DAY'; day: number }
-    // 切换视图（day / overview / techstack）
     | { type: 'SET_CURRENT_VIEW'; view: 'day' | 'overview' | 'techstack' }
-    // 展开/折叠某一周
     | { type: 'TOGGLE_WEEK'; week: number }
     // 当日打卡/取消打卡，payload: 日期字符串 "2026-06-23"
     | { type: 'CHECKIN'; date: string }
     // 添加自定义内容，payload: { day, contentType, item }
     // day 为数字时表示 Day 卡片，为 `techStack-${stackId}` 字符串时表示技术栈详情页
     | { type: 'ADD_CONTENT'; day: number | string; contentType: ContentType; item: CustomItem }
-    // 删除自定义内容，payload: { day, contentType, id }
     | { type: 'DELETE_CUSTOM'; day: number | string; contentType: ContentType; id: string }
-    // 隐藏预置内容，payload: { day, contentType, index }
     | { type: 'HIDE_PRESET'; day: number | string; contentType: ContentType; index: number }
-    // 恢复预置内容，payload: { day, contentType, index }
     | { type: 'RESTORE_PRESET'; day: number | string; contentType: ContentType; index: number }
-    // 切换侧边栏视图模式（按时间 / 按技术栈）
     | { type: 'SET_SIDEBAR_VIEW'; view: 'time' | 'techstack' }
     // 设置当前技术栈，stackId 为 null 表示取消选中
     | { type: 'SET_TECH_STACK'; stackId: string | null }
-    // 切换面试题掌握状态
     | { type: 'TOGGLE_QUESTION_MASTERED'; questionId: string }
-    // 设置面试题优先级
     | { type: 'SET_QUESTION_PRIORITY'; questionId: string; priority: QuestionPriority }
     // Editorial Hybrid 新增 Action
-    // 切换卡片评估（pass/fail）
     | { type: 'TOGGLE_CARD_EVAL'; day: number; cardIndex: number; result: 'pass' | 'fail' }
-    // 切换题目复习标记
     | { type: 'TOGGLE_QUESTION_REVIEW'; questionId: string }
-    // 切换模拟题要点展开
-    | { type: 'TOGGLE_MOCK_TIPS'; day: number; index: number }
-    // 设置技术栈筛选
+    // 设置模拟题要点展开状态，payload: { day, index, value }；value 取自 details.toggle 后的真实 open 值
+    // 注意：必须用 SET 而非 TOGGLE，否则受控 details 的 open 纠正会触发额外 toggle 事件导致方向不确定的拉锯抖动
+    | { type: 'SET_MOCK_TIPS'; day: number; index: number; value: boolean }
     | { type: 'SET_TECHSTACK_FILTER'; filter: 'all' | 'unmastered' | 'interview' }
-    // 切换侧边栏开合
     | { type: 'TOGGLE_SIDEBAR' }
-    // 批量加入复习
     | { type: 'ADD_TO_REVIEW'; items: string[] }
-    // 导入部分状态（用于迁移/同步）
     | { type: 'IMPORT_STATE'; state: Partial<AppState> }
     // 调整内容排序，payload: { day, contentType, order }
     // order 为新的全量条目 id 顺序
     | { type: 'REORDER_CONTENT'; day: number | string; contentType: ContentType; order: string[] }
-    // 从 IndexedDB 加载状态
     | { type: 'LOAD_STATE'; state: AppState }
     // ===================== 不牢固决策与复习队列 =====================
     // 提交决策弹窗：一次性设置 weakReason + masteryLevel + weakMeta +（跳过时）questionReview + reviewUrgency
     | { type: 'WEAK_DECISION'; key: string; payload: WeakDecisionInput }
-    // 手动设置不掌握原因
     | { type: 'SET_WEAK_REASON'; key: string; reason: WeakReason }
     // 手动设置掌握程度（与 questionStatus.mastered 双向同步）
     | { type: 'SET_MASTERY_LEVEL'; key: string; level: MasteryLevel }
-    // 手动设置复习紧迫度
     | { type: 'SET_REVIEW_URGENCY'; key: string; urgency: ReviewUrgency }
-    // 打开决策弹窗
     | { type: 'OPEN_WEAK_DIALOG'; key: string; text: string; priority: QuestionPriority }
-    // 关闭决策弹窗
     | { type: 'CLOSE_WEAK_DIALOG' };
 
 // ===================== 初始状态 =====================
@@ -107,41 +89,18 @@ export const initialState: AppState = {
     reviewUrgency: {},
     weakMeta: {},
     dialogState: null,
+    loaded: false,
 };
 
 // ===================== Reducer =====================
 export function reducer(state: AppState, action: Action): AppState {
     switch (action.type) {
-        case 'TOGGLE_TASK': {
-            const next = { ...state.tasks };
-            const nextValue = action.value ?? !next[action.key];
-            if (nextValue) {
-                next[action.key] = true;
-            } else {
-                delete next[action.key];
-            }
-            return { ...state, tasks: next };
-        }
-        case 'TOGGLE_MOCK': {
-            const next = { ...state.mock };
-            const nextValue = action.value ?? !next[action.key];
-            if (nextValue) {
-                next[action.key] = true;
-            } else {
-                delete next[action.key];
-            }
-            return { ...state, mock: next };
-        }
-        case 'TOGGLE_ALGO': {
-            const next = { ...state.algo };
-            const nextValue = action.value ?? !next[action.key];
-            if (nextValue) {
-                next[action.key] = true;
-            } else {
-                delete next[action.key];
-            }
-            return { ...state, algo: next };
-        }
+        case 'TOGGLE_TASK':
+            return { ...state, tasks: toggleKey(state.tasks, action.key, action.value) };
+        case 'TOGGLE_MOCK':
+            return { ...state, mock: toggleKey(state.mock, action.key, action.value) };
+        case 'TOGGLE_ALGO':
+            return { ...state, algo: toggleKey(state.algo, action.key, action.value) };
         case 'SET_TIER':
             return { ...state, tier: action.tier };
         case 'SET_CURRENT_DAY':
@@ -256,13 +215,13 @@ export function reducer(state: AppState, action: Action): AppState {
                 },
             };
         }
-        case 'TOGGLE_MOCK_TIPS': {
+        case 'SET_MOCK_TIPS': {
             const key = `${action.day}-${action.index}`;
             return {
                 ...state,
                 mockTipsExpanded: {
                     ...state.mockTipsExpanded,
-                    [key]: !state.mockTipsExpanded[key],
+                    [key]: action.value,
                 },
             };
         }
@@ -290,7 +249,7 @@ export function reducer(state: AppState, action: Action): AppState {
             return { ...state, ...action.state };
         case 'LOAD_STATE':
             // 与 initialState 合并，兼容旧版本缺少 customContent/hiddenContent 的状态
-            return { ...initialState, ...action.state };
+            return { ...initialState, ...action.state, loaded: true };
         case 'WEAK_DECISION': {
             const { reason, mastery, decision, isPrerequisite, priority, day, text } = action.payload;
             const key = action.key;
@@ -324,10 +283,11 @@ export function reducer(state: AppState, action: Action): AppState {
                     mastered: action.level === 'mastered',
                 };
             }
-            // 若标记为已掌握，自动从复习队列移除
+            // 若标记为已掌握，自动从复习队列移除（统一 delete 风格保持对象干净）
             let questionReview = state.questionReview;
             if (action.level === 'mastered' && questionReview[action.key]) {
-                questionReview = { ...questionReview, [action.key]: false };
+                questionReview = { ...questionReview };
+                delete questionReview[action.key];
             }
             return { ...state, masteryLevel, questionStatus, questionReview };
         }
@@ -372,31 +332,46 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         let cancelled = false;
         loadState().then((loaded) => {
-            if (!cancelled && loaded) {
-                // 迁移：确保新字段存在（兼容旧数据）
-                const migratedState: AppState = { ...initialState, ...loaded };
-                if (!migratedState.cardEval) migratedState.cardEval = {};
-                if (!migratedState.questionReview) migratedState.questionReview = {};
-                if (!migratedState.mockTipsExpanded) migratedState.mockTipsExpanded = {};
-                if (!migratedState.techStackFilter) migratedState.techStackFilter = 'all';
-                if (migratedState.sidebarOpen === undefined) migratedState.sidebarOpen = false;
-                if (!migratedState.contentOrder) migratedState.contentOrder = {};
-                if (!migratedState.weakReason) migratedState.weakReason = {};
-                if (!migratedState.masteryLevel) migratedState.masteryLevel = {};
-                if (!migratedState.reviewUrgency) migratedState.reviewUrgency = {};
-                if (!migratedState.weakMeta) migratedState.weakMeta = {};
-                if (!migratedState.dialogState) migratedState.dialogState = null;
-                dispatch({ type: 'LOAD_STATE', state: migratedState });
-            }
+            if (cancelled) return;
+            // loaded 为 null 时（首次访问 / 版本不匹配 / 加载失败）使用 initialState 作为默认状态
+            const migratedState: AppState = loaded
+                ? { ...initialState, ...loaded }
+                : { ...initialState };
+            // 迁移：确保新字段存在（兼容旧数据）
+            if (!migratedState.cardEval) migratedState.cardEval = {};
+            if (!migratedState.questionReview) migratedState.questionReview = {};
+            if (!migratedState.mockTipsExpanded) migratedState.mockTipsExpanded = {};
+            if (!migratedState.techStackFilter) migratedState.techStackFilter = 'all';
+            if (migratedState.sidebarOpen === undefined) migratedState.sidebarOpen = false;
+            if (!migratedState.contentOrder) migratedState.contentOrder = {};
+            if (!migratedState.weakReason) migratedState.weakReason = {};
+            if (!migratedState.masteryLevel) migratedState.masteryLevel = {};
+            if (!migratedState.reviewUrgency) migratedState.reviewUrgency = {};
+            if (!migratedState.weakMeta) migratedState.weakMeta = {};
+            if (!migratedState.dialogState) migratedState.dialogState = null;
+            dispatch({ type: 'LOAD_STATE', state: migratedState });
         });
         return () => {
             cancelled = true;
         };
     }, []);
 
-    // 状态变化时自动保存到 IndexedDB（跳过首次未加载完成的保存）
+    // 状态变化时自动保存到 IndexedDB
+    // - 跳过未加载完成的保存（避免用 initialState 覆盖磁盘数据）
+    // - 300ms 防抖：高频勾选时合并为一次写入，避免 IndexedDB I/O 阻塞 UI
+    const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     useEffect(() => {
-        saveState(state);
+        if (!state.loaded) return;
+        if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = setTimeout(() => {
+            void saveState(state);
+        }, 300);
+        return () => {
+            if (saveTimerRef.current) {
+                clearTimeout(saveTimerRef.current);
+                saveTimerRef.current = null;
+            }
+        };
     }, [state]);
 
     const value = useMemo(() => ({ state, dispatch }), [state]);

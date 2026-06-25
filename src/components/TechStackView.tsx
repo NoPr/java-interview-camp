@@ -5,7 +5,7 @@ import { INTERVIEW_QUESTIONS } from '../data/interviewQuestions';
 import { useAppState } from '../hooks/useAppState';
 import { InterviewQuestion, QuestionPriority, ContentType, CustomItem } from '../types';
 import { priorityLabel } from '../utils/questionMatcher';
-import { AddRestoreControls } from './DayCard';
+import { AddRestoreControls } from './daycard/AddRestoreControls';
 import { SortableSection } from './SortableSection';
 import { mergeWithOrder, type OrderableItem } from '../utils/mergeWithOrder';
 

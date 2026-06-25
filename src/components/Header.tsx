@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import { getTechStackById } from '../data/techStacks';
 import { useAppState } from '../hooks/useAppState';
 import type { Tier } from '../types';
@@ -44,6 +44,23 @@ export default function Header() {
     const checkedInToday = checkins.includes(today);
     const streak = calcStreak(checkins);
     const selectedStackName = currentTechStack ? getTechStackById(currentTechStack)?.name ?? '' : '';
+
+    const [isDark, setIsDark] = useState(false);
+
+    useEffect(() => {
+        const stored = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const dark = stored === 'dark' || (!stored && prefersDark);
+        setIsDark(dark);
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    }, []);
+
+    const toggleTheme = () => {
+        const next = !isDark;
+        setIsDark(next);
+        document.documentElement.setAttribute('data-theme', next ? 'dark' : 'light');
+        localStorage.setItem('theme', next ? 'dark' : 'light');
+    };
 
     // 导出当前状态为 JSON 文件，文件名带日期便于归档
     const handleExport = () => {
@@ -105,6 +122,14 @@ export default function Header() {
                 </div>
             </div>
             <div className="header-right">
+                <button
+                    className="ed-header-btn ed-theme-toggle"
+                    onClick={toggleTheme}
+                    aria-label="切换深色模式"
+                    title={isDark ? '切换到浅色模式' : '切换到深色模式'}
+                >
+                    {isDark ? '☀️' : '🌙'}
+                </button>
                 <div className="ed-header-actions">
                     <button className="ed-header-btn" onClick={handleExport}>
                         导出
