@@ -34,10 +34,9 @@ interface ReviewItem {
 export function ReviewQueue() {
     const { state, dispatch } = useAppState();
 
-    // 收集所有待复习项：questionReview[key] === true 且 masteryLevel !== 'mastered'
+    // 收集所有待复习项：questionReview[key] === true（含已掌握，归入已掌握分组置底）
     const items: ReviewItem[] = Object.entries(state.questionReview)
         .filter(([_, inReview]) => inReview)
-        .filter(([key]) => state.masteryLevel[key] !== 'mastered')
         .map(([key]) => {
             const meta = state.weakMeta[key];
             return {
@@ -51,14 +50,17 @@ export function ReviewQueue() {
         })
         .sort((a, b) => urgencyWeight(a.urgency) - urgencyWeight(b.urgency));
 
-    // 按紧迫度分组
-    const groups: Record<ReviewUrgency, ReviewItem[]> = {
-        high: items.filter((i) => i.urgency === 'high'),
-        mid: items.filter((i) => i.urgency === 'mid'),
-        low: items.filter((i) => i.urgency === 'low'),
+    // 按紧迫度分组（已掌握单独分组置底）
+    const groups: Record<string, ReviewItem[]> = {
+        high: items.filter((i) => i.urgency === 'high' && i.mastery !== 'mastered'),
+        mid: items.filter((i) => i.urgency === 'mid' && i.mastery !== 'mastered'),
+        low: items.filter((i) => i.urgency === 'low' && i.mastery !== 'mastered'),
+        mastered: items.filter((i) => i.mastery === 'mastered'),
     };
 
     const total = items.length;
+    const unmasteredCount = items.filter((i) => i.mastery !== 'mastered').length;
+    const masteredCount = total - unmasteredCount;
 
     const handleMasteryChange = (key: string, level: MasteryLevel) => {
         dispatch({ type: 'SET_MASTERY_LEVEL', key, level });
@@ -71,12 +73,15 @@ export function ReviewQueue() {
     };
 
     const handleMarkAllMastered = () => {
-        items.forEach((item) => {
-            dispatch({ type: 'SET_MASTERY_LEVEL', key: item.key, level: 'mastered' });
-        });
+        items
+            .filter((item) => item.mastery !== 'mastered')
+            .forEach((item) => {
+                dispatch({ type: 'SET_MASTERY_LEVEL', key: item.key, level: 'mastered' });
+            });
     };
 
     if (total === 0) {
+        // 保留现有空状态（total 含已掌握，若 total===0 说明真没有项）
         return (
             <div className="ed-review-queue ed-review-queue-empty">
                 <p className="ed-review-hint">🎉 复习队列为空，没有待复习的不牢固项！</p>
@@ -87,16 +92,21 @@ export function ReviewQueue() {
     return (
         <div className="ed-review-queue">
             <div className="ed-review-queue-header">
-                <h3 className="ed-review-queue-title">🔄 复习队列（{total} 项）</h3>
+                <h3 className="ed-review-queue-title">
+                    🔄 复习队列（未掌握 {unmasteredCount} / 已掌握 {masteredCount}）
+                </h3>
                 <button className="ed-review-queue-btn" onClick={handleMarkAllMastered}>
-                    全部标记已掌握
+                    将未掌握项全部标已掌握
                 </button>
             </div>
 
-            {(['high', 'mid', 'low'] as ReviewUrgency[]).map((urgency) => {
+            {(['high', 'mid', 'low', 'mastered'] as const).map((urgency) => {
                 const groupItems = groups[urgency];
                 if (groupItems.length === 0) return null;
-                const meta = URGENCY_META[urgency];
+                // 已掌握组用固定 meta，其余用 URGENCY_META
+                const meta = urgency === 'mastered'
+                    ? { icon: '✅', label: '已掌握', color: 'mastered' }
+                    : URGENCY_META[urgency as ReviewUrgency];
                 return (
                     <div key={urgency} className={`ed-review-group ed-review-group--${meta.color}`}>
                         <div className="ed-review-group-header">
