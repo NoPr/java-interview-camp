@@ -3197,3 +3197,43 @@ body {
 .skeleton-wrap {
   animation: ed-fade-in 300ms ease both;
 }
+
+/* ===================== 标记详情视图与撤销确认 ===================== */
+.ed-dialog-detail-row {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ed-ink, #1c1c1a);
+    margin: 4px 0;
+    line-height: 1.5;
+}
+
+.ed-dialog-detail-label {
+    color: var(--ed-ink-muted, #8a8a82);
+    min-width: 80px;
+    flex-shrink: 0;
+}
+
+.ed-dialog-detail-advice {
+    font-size: 12px;
+    color: var(--ed-ink-muted, #8a8a82);
+    margin: 4px 0 4px 88px;
+    line-height: 1.5;
+}
+
+.ed-dialog-btn-danger {
+    background: var(--ed-red, #dc2626);
+    color: white;
+    border-color: var(--ed-red, #dc2626);
+    width: 100%;
+    margin-top: 12px;
+}
+
+.ed-dialog-btn-danger:hover {
+    opacity: 0.9;
+}
+
+/* ===================== 已掌握分组样式 ===================== */
+.ed-review-group--mastered .ed-review-group-header {
+    color: var(--ed-brand-deep, #14532d);
+}
