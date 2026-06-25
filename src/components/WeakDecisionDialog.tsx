@@ -17,6 +17,21 @@ const URGENCY_LABEL: Record<string, string> = {
     low: '低紧迫（面试前冲刺）',
 };
 
+const MASTERY_LABEL: Record<string, string> = {
+    mastered: '已掌握',
+    vague: '能讲个大概',
+    clueless: '完全没思路',
+    unknown: '未评估',
+};
+
+const REASON_META: Record<WeakReason, { icon: string; label: string; advice: string }> = {
+    concept: { icon: '📖', label: '概念不清', advice: '重学理论：展开答案/查文档' },
+    memory: { icon: '🔄', label: '记忆模糊', advice: '闪卡重复：快速过一遍关键词' },
+    articulate: { icon: '🗣', label: '讲不出来', advice: '口述练习：闭眼讲一遍' },
+    confuse: { icon: '🔀', label: '易混淆', advice: '对比辨析：找相似概念对比' },
+    apply: { icon: '✏️', label: '不会应用', advice: '实战做题：找相关题练习' },
+};
+
 export function WeakDecisionDialog() {
     const { state, dispatch } = useAppState();
     const dialog = state.dialogState;
@@ -25,6 +40,7 @@ export function WeakDecisionDialog() {
     const [mastery, setMastery] = useState<'clueless' | 'vague'>('vague');
     const [reason, setReason] = useState<WeakReason | null>(null);
     const [showAnswer, setShowAnswer] = useState(false);
+    const [confirmClear, setConfirmClear] = useState(false);
 
     // 弹窗打开时重置内部状态
     useEffect(() => {
@@ -33,10 +49,100 @@ export function WeakDecisionDialog() {
             setMastery('vague');
             setReason(null);
             setShowAnswer(false);
+            setConfirmClear(false);
         }
     }, [dialog?.open, dialog?.key]);
 
     if (!dialog?.open) return null;
+
+    // 撤销标记：清除该题所有不牢固标记并关闭弹窗（详情视图与确认弹窗均会调用）
+    const handleClear = () => {
+        dispatch({ type: 'CLEAR_WEAK_MARK', key: dialog.key });
+        dispatch({ type: 'CLOSE_WEAK_DIALOG' });
+    };
+
+    // 已标记：显示标记详情视图（含撤销入口）
+    const existingReason = state.weakReason[dialog.key];
+    if (existingReason && !showAnswer) {
+        const reasonMeta = REASON_META[existingReason];
+        const existingMastery = state.masteryLevel[dialog.key] ?? 'unknown';
+        const existingUrgency = state.reviewUrgency[dialog.key];
+        const inReview = !!state.questionReview[dialog.key];
+
+        // 撤销确认弹窗
+        if (confirmClear) {
+            return (
+                <div className="ed-dialog-overlay" onClick={() => setConfirmClear(false)}>
+                    <div className="ed-dialog" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="ed-dialog-title">确认撤销标记？</h3>
+                        <p className="ed-dialog-text">
+                            将清除该题所有不牢固标记并移出复习队列，此操作不可恢复。
+                        </p>
+                        <div className="ed-dialog-actions">
+                            <button
+                                className="ed-dialog-btn ed-dialog-btn-secondary"
+                                onClick={() => setConfirmClear(false)}
+                            >
+                                取消
+                            </button>
+                            <button
+                                className="ed-dialog-btn ed-dialog-btn-primary"
+                                onClick={handleClear}
+                            >
+                                确认撤销
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // 标记详情视图
+        return (
+            <div className="ed-dialog-overlay" onClick={() => dispatch({ type: 'CLOSE_WEAK_DIALOG' })}>
+                <div className="ed-dialog" onClick={(e) => e.stopPropagation()}>
+                    <h3 className="ed-dialog-title">这道题已标记不牢固</h3>
+                    <p className="ed-dialog-text">{dialog.text}</p>
+
+                    <div className="ed-dialog-section">
+                        <div className="ed-dialog-detail-row">
+                            <span className="ed-dialog-detail-label">不掌握原因：</span>
+                            <span>{reasonMeta.icon} {reasonMeta.label}</span>
+                        </div>
+                        <div className="ed-dialog-detail-advice">
+                            → 复习方式：{reasonMeta.advice}
+                        </div>
+                    </div>
+
+                    <div className="ed-dialog-section">
+                        <div className="ed-dialog-detail-row">
+                            <span className="ed-dialog-detail-label">掌握程度：</span>
+                            <span>{MASTERY_LABEL[existingMastery]}</span>
+                        </div>
+                        <div className="ed-dialog-detail-row">
+                            <span className="ed-dialog-detail-label">复习紧迫度：</span>
+                            <span>
+                                {existingUrgency
+                                    ? `${URGENCY_LABEL[existingUrgency]?.split('（')[0] ?? existingUrgency}`
+                                    : '—（死磕，未进队列）'}
+                            </span>
+                        </div>
+                        <div className="ed-dialog-detail-row">
+                            <span className="ed-dialog-detail-label">在复习队列：</span>
+                            <span>{inReview ? '是' : '否'}</span>
+                        </div>
+                    </div>
+
+                    <button
+                        className="ed-dialog-btn ed-dialog-btn-danger"
+                        onClick={() => setConfirmClear(true)}
+                    >
+                        撤销标记
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     const priority: QuestionPriority = dialog.priority;
     const suggestion = suggestDecision(isPrerequisite, mastery, priority);
